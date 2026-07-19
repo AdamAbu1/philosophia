@@ -1,19 +1,10 @@
 import { useEffect, useState } from 'react'
-import Timeline from './Timeline.jsx'
+import Globe from './Globe.jsx'
 import DetailPanel from './DetailPanel.jsx'
 import { byId } from './data.js'
 
 export default function App() {
   const [selectedId, setSelectedId] = useState(null)
-
-  // Influence-chip jumps scroll the strip to the target's era, then select.
-  function jumpTo(id) {
-    const p = byId[id]
-    document
-      .getElementById(`band-${p.era}`)
-      ?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' })
-    setSelectedId(id)
-  }
 
   useEffect(() => {
     const onKey = e => {
@@ -26,15 +17,14 @@ export default function App() {
   return (
     <>
       <header>
-        <h1>
-          PHILOSOPHIA<span>an interactive timeline of philosophy</span>
-        </h1>
+        <h1>PHILOSOPHIA</h1>
+        <div className="sub">a globe of philosophy · six centuries before the common era to the present</div>
       </header>
-      <Timeline selectedId={selectedId} onSelect={setSelectedId} />
+      <Globe selectedId={selectedId} onSelect={setSelectedId} />
       <DetailPanel
         philosopher={selectedId ? byId[selectedId] : null}
         onClose={() => setSelectedId(null)}
-        onJump={jumpTo}
+        onJump={setSelectedId}
       />
     </>
   )

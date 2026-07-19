@@ -11,10 +11,12 @@ philosophy (48 thinkers), era bands, detail drawer with influence-chip jumps.
   extension points for Chinese / Indian / Islamic tracks (v2). Western-only until then.
 
 ## Structure
-- `src/data.js` — eras (piecewise axis: per-era pixel width) + core philosopher records; merges `details.js` and computes reverse `influenced` links
+- `src/data.js` — eras, core philosopher records + birthplace coords (PLACES); merges `details.js`, computes reverse `influenced` links
 - `src/details.js` — long-form content per thinker: bio, titled key ideas, major works, legacy (schema test-enforced)
-- `src/layout.js` — pure positioning (clamp, 14px min gap, 4-lane cycling); tested
-- `src/Timeline.jsx` / `src/DetailPanel.jsx` / `src/App.jsx` — UI; the detail entry renders inline BELOW the strip (owner rejected the pop-out drawer — keep it inline)
+- `src/geo.js` — pure globe helpers (era-for-year, frontside check, same-city fan-out, jump-year rule); tested
+- `src/Globe.jsx` — THE main view: engraved SVG orthographic globe (d3-geo + bundled `assets/land-110m.json`), drag-rotate, idle spin, time scrubber with play. The old timeline strip was removed by owner decision (globe replaced it; see git history). Click-vs-drag uses a 3px movement threshold WITHOUT pointer capture — capturing on pointerdown retargets pointerup and eats point clicks; don't reintroduce it.
+- `src/DetailPanel.jsx` / `src/App.jsx` — the entry renders inline BELOW the globe (owner rejected pop-out drawer — keep it inline)
+- `src/format.js` — date formatting
 - `public/portraits/<id>.png` — engraved portraits, one per philosopher (test-enforced)
 
 ## Commands
@@ -34,8 +36,9 @@ For ancients with no surviving likeness, describe a dignified era-appropriate
 archetype; for post-1400 figures the model knows the historical faces.
 
 ## Known quirks / open items
-- Claude Code Browser pane reports `visibilityState: "hidden"` → smooth-scroll
-  animations don't play there. Verify scrolling with `behavior:'instant'` in
-  devtools; the app code is correct — don't "fix" it.
-- Open: mobile/vertical layout, keyboard a11y for nodes (currently divs),
-  portrait webp compression (~96MB of PNGs), deploy target, v2 traditions.
+- Claude Code Browser pane reports `visibilityState: "hidden"` → requestAnimationFrame
+  is suspended there, so idle spin, the play sweep, and the rotate-to-selection tween
+  don't animate in the pane. Scrubbing and clicking still work (event-driven). The app
+  code is correct — verify animations in a real browser; don't "fix" them.
+- Open: keyboard a11y for globe points, portrait webp compression (~96MB of PNGs),
+  deploy target, v2 traditions (Chinese · Indian · Islamic points on the same globe).

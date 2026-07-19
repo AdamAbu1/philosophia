@@ -1,16 +1,15 @@
 import { DETAILS } from './details.js'
 
-// Eras define the piecewise time axis: each gets a fixed pixel width so dense
-// ancient stretches aren't crushed by a linear scale. `squeeze` labels heavy compression.
+// Eras label periods for the scrubber readout and entry chips.
 export const ERAS = [
-  { id: 'pre', name: 'Pre-Socratic', start: -650, end: -480, width: 440, tint: '#f4efe8' },
-  { id: 'cla', name: 'Classical', start: -480, end: -300, width: 460, tint: '#eef2f6' },
-  { id: 'hel', name: 'Hellenistic & Roman', start: -345, end: 200, width: 430, tint: '#f0f3ec', squeeze: '545 yrs · compressed' },
-  { id: 'med', name: 'Medieval', start: 200, end: 1400, width: 430, tint: '#f5eff3', squeeze: '1,200 yrs · compressed' },
-  { id: 'ren', name: 'Renaissance & Early Modern', start: 1400, end: 1700, width: 560, tint: '#eff4f4' },
-  { id: 'enl', name: 'Enlightenment', start: 1700, end: 1800, width: 420, tint: '#f6f2ea' },
-  { id: 'c19', name: '19th Century', start: 1795, end: 1905, width: 520, tint: '#f0eff6' },
-  { id: 'c20', name: '20th Century', start: 1885, end: 2015, width: 800, tint: '#edf3f0' },
+  { id: 'pre', name: 'Pre-Socratic', start: -650, end: -480 },
+  { id: 'cla', name: 'Classical', start: -480, end: -300 },
+  { id: 'hel', name: 'Hellenistic & Roman', start: -345, end: 200 },
+  { id: 'med', name: 'Medieval', start: 200, end: 1400 },
+  { id: 'ren', name: 'Renaissance & Early Modern', start: 1400, end: 1700 },
+  { id: 'enl', name: 'Enlightenment', start: 1700, end: 1800 },
+  { id: 'c19', name: '19th Century', start: 1795, end: 1905 },
+  { id: 'c20', name: '20th Century', start: 1885, end: 2015 },
 ]
 
 // v1 ships the Western canon; `tradition` and parallel timeline lanes are the
@@ -177,11 +176,64 @@ const WESTERN = [
     line: 'Power is everywhere.', influences: ['nietzsche', 'marx'] },
 ]
 
+// Birthplaces (approximate town coordinates) for the globe view.
+const PLACES = {
+  thales: { name: 'Miletus', lat: 37.53, lon: 27.28 },
+  anaximander: { name: 'Miletus', lat: 37.53, lon: 27.28 },
+  pythagoras: { name: 'Samos', lat: 37.75, lon: 26.83 },
+  heraclitus: { name: 'Ephesus', lat: 37.95, lon: 27.37 },
+  parmenides: { name: 'Elea', lat: 40.16, lon: 15.15 },
+  socrates: { name: 'Athens', lat: 37.98, lon: 23.73 },
+  democritus: { name: 'Abdera', lat: 40.94, lon: 24.98 },
+  plato: { name: 'Athens', lat: 37.98, lon: 23.73 },
+  diogenes: { name: 'Sinope', lat: 42.03, lon: 35.15 },
+  aristotle: { name: 'Stagira', lat: 40.53, lon: 23.75 },
+  pyrrho: { name: 'Elis', lat: 37.89, lon: 21.37 },
+  epicurus: { name: 'Samos', lat: 37.75, lon: 26.83 },
+  zeno: { name: 'Citium', lat: 34.92, lon: 33.63 },
+  marcus: { name: 'Rome', lat: 41.89, lon: 12.48 },
+  plotinus: { name: 'Lycopolis', lat: 27.18, lon: 31.18 },
+  augustine: { name: 'Thagaste', lat: 36.29, lon: 7.95 },
+  anselm: { name: 'Aosta', lat: 45.74, lon: 7.32 },
+  aquinas: { name: 'Roccasecca', lat: 41.55, lon: 13.67 },
+  ockham: { name: 'Ockham, Surrey', lat: 51.3, lon: -0.45 },
+  machiavelli: { name: 'Florence', lat: 43.77, lon: 11.25 },
+  bacon: { name: 'London', lat: 51.51, lon: -0.13 },
+  hobbes: { name: 'Malmesbury', lat: 51.58, lon: -2.1 },
+  descartes: { name: 'La Haye, Touraine', lat: 46.99, lon: 0.7 },
+  spinoza: { name: 'Amsterdam', lat: 52.37, lon: 4.9 },
+  locke: { name: 'Wrington', lat: 51.36, lon: -2.76 },
+  leibniz: { name: 'Leipzig', lat: 51.34, lon: 12.37 },
+  berkeley: { name: 'Kilkenny', lat: 52.65, lon: -7.25 },
+  hume: { name: 'Edinburgh', lat: 55.95, lon: -3.19 },
+  rousseau: { name: 'Geneva', lat: 46.2, lon: 6.14 },
+  kant: { name: 'Königsberg', lat: 54.71, lon: 20.51 },
+  bentham: { name: 'London', lat: 51.51, lon: -0.13 },
+  wollstonecraft: { name: 'London', lat: 51.52, lon: -0.07 },
+  hegel: { name: 'Stuttgart', lat: 48.78, lon: 9.18 },
+  schopenhauer: { name: 'Danzig', lat: 54.35, lon: 18.65 },
+  mill: { name: 'London', lat: 51.53, lon: -0.11 },
+  kierkegaard: { name: 'Copenhagen', lat: 55.68, lon: 12.57 },
+  marx: { name: 'Trier', lat: 49.75, lon: 6.64 },
+  james: { name: 'New York', lat: 40.71, lon: -74.01 },
+  nietzsche: { name: 'Röcken', lat: 51.25, lon: 12.11 },
+  russell: { name: 'Trellech, Wales', lat: 51.74, lon: -2.73 },
+  wittgenstein: { name: 'Vienna', lat: 48.21, lon: 16.37 },
+  heidegger: { name: 'Messkirch', lat: 47.99, lon: 9.11 },
+  sartre: { name: 'Paris', lat: 48.86, lon: 2.35 },
+  arendt: { name: 'Hanover', lat: 52.37, lon: 9.72 },
+  beauvoir: { name: 'Paris', lat: 48.86, lon: 2.35 },
+  camus: { name: 'Mondovi, Algeria', lat: 36.68, lon: 7.75 },
+  rawls: { name: 'Baltimore', lat: 39.29, lon: -76.61 },
+  foucault: { name: 'Poitiers', lat: 46.58, lon: 0.34 },
+}
+
 export const PHILOSOPHERS = WESTERN.map(p => ({
   ...p,
   ...DETAILS[p.id],
   tradition: 'western',
   portrait: `portraits/${p.id}.png`,
+  place: PLACES[p.id],
   influenced: WESTERN.filter(q => q.influences.includes(p.id)).map(q => q.id),
 }))
 

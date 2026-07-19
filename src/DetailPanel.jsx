@@ -1,5 +1,5 @@
 import { byId, eraById } from './data.js'
-import { fmtRange } from './layout.js'
+import { fmtRange } from './format.js'
 
 function ChipRow({ label, ids, onJump }) {
   if (!ids.length) return null
@@ -21,7 +21,7 @@ export default function DetailPanel({ philosopher: p, onClose, onJump }) {
   if (!p) {
     return (
       <div className="detail-hint">
-        Select a thinker on the timeline to open their entry here.
+        Select a thinker on the globe to open their entry here.
       </div>
     )
   }
@@ -34,7 +34,9 @@ export default function DetailPanel({ philosopher: p, onClose, onJump }) {
       <div className="detail-side">
         <img className="portrait-img" src={p.portrait} alt={`Engraved portrait of ${p.name}`} />
         <h3>{p.name}</h3>
-        <div className="dates">{fmtRange(p)}</div>
+        <div className="dates">
+          {fmtRange(p)} · born at {p.place.name}
+        </div>
         <div className="chips">
           <span className="c">{era.name}</span>
           {p.school !== '—' && <span className="c">{p.school}</span>}
