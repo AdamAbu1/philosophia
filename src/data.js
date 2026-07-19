@@ -295,7 +295,7 @@ export const PHILOSOPHERS = WESTERN.map(p => ({
   ...p,
   ...DETAILS[p.id],
   tradition: 'western',
-  portrait: `portraits/${p.id}.png`,
+  portrait: `portraits/${p.id}.jpg`,
   thumb: `portraits/thumbs/${p.id}.png`,
   place: PLACES[p.id],
   alias: LINKS[p.id].wiki.replaceAll('_', ' '),

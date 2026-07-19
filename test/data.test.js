@@ -102,7 +102,7 @@ describe('philosopher data schema', () => {
       expect(p.line).toBeTruthy()
       expect(Array.isArray(p.influences)).toBe(true)
       expect(p.tradition).toBe('western')
-      expect(p.portrait).toBe(`portraits/${p.id}.png`)
+      expect(p.portrait).toBe(`portraits/${p.id}.jpg`)
     }
   })
 
