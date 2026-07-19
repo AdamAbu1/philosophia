@@ -14,4 +14,7 @@ describe('date formatting', () => {
   it('formats modern lives without suffix', () => {
     expect(fmtRange({ born: 1905, died: 1980 })).toBe('1905–1980')
   })
+  it('formats living thinkers as open-ended', () => {
+    expect(fmtRange({ born: 1932, died: null })).toBe('1932–present')
+  })
 })

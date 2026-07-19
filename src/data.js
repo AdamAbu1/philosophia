@@ -9,7 +9,7 @@ export const ERAS = [
   { id: 'ren', name: 'Renaissance & Early Modern', start: 1400, end: 1700 },
   { id: 'enl', name: 'Enlightenment', start: 1700, end: 1800 },
   { id: 'c19', name: '19th Century', start: 1795, end: 1905 },
-  { id: 'c20', name: '20th Century', start: 1885, end: 2015 },
+  { id: 'c20', name: '20th Century', start: 1885, end: 2026 },
 ]
 
 // v1 ships the Western canon; `tradition` and parallel timeline lanes are the
@@ -174,6 +174,12 @@ const WESTERN = [
   { id: 'foucault', name: 'Michel Foucault', born: 1926, died: 1984, era: 'c20', school: 'Post-structuralism',
     blurb: 'Power doesn’t just forbid — it produces: norms, categories, and "truths" enforced through prisons, clinics, and schools. His histories show how the present became thinkable.',
     line: 'Power is everywhere.', influences: ['nietzsche', 'marx'] },
+  { id: 'searle', name: 'John Searle', born: 1932, died: null, era: 'c20', school: 'Analytic',
+    blurb: 'Words do not just describe — they act; and a computer shuffling symbols understands nothing. Speech acts and the Chinese Room made him analytic philosophy’s great provocateur of mind and language.',
+    line: 'Syntax is not semantics.', influences: ['wittgenstein'] },
+  { id: 'kripke', name: 'Saul Kripke', born: 1940, died: 2022, era: 'c20', school: 'Analytic',
+    blurb: 'Names refer directly, necessity is real, and possible worlds can be reasoned about with precision — three lectures delivered without notes redrew the map of language and metaphysics.',
+    line: 'Names are rigid designators.', influences: ['leibniz', 'russell', 'wittgenstein'] },
 ]
 
 // Birthplaces (approximate town coordinates) for the globe view.
@@ -226,6 +232,8 @@ const PLACES = {
   camus: { name: 'Mondovi, Algeria', lat: 36.68, lon: 7.75 },
   rawls: { name: 'Baltimore', lat: 39.29, lon: -76.61 },
   foucault: { name: 'Poitiers', lat: 46.58, lon: 0.34 },
+  searle: { name: 'Denver', lat: 39.74, lon: -104.99 },
+  kripke: { name: 'Bay Shore, New York', lat: 40.72, lon: -73.25 },
 }
 
 // Further-reading targets: Stanford Encyclopedia entry slug, Wikipedia title,
@@ -279,6 +287,8 @@ const LINKS = {
   camus: { sep: 'camus', wiki: 'Albert_Camus', pd: false },
   rawls: { sep: 'rawls', wiki: 'John_Rawls', pd: false },
   foucault: { sep: 'foucault', wiki: 'Michel_Foucault', pd: false },
+  searle: { sep: 'chinese-room', wiki: 'John_Searle', pd: false },
+  kripke: { sep: 'rigid-designators', wiki: 'Saul_Kripke', pd: false },
 }
 
 export const PHILOSOPHERS = WESTERN.map(p => ({

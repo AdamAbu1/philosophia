@@ -162,7 +162,7 @@ export default function Globe({ selectedId, onSelect }) {
       if (!isFrontside(COORDS[p.id], rotation)) continue
       const [px, py] = projection(COORDS[p.id])
       if (px < -60 || px > W + 60 || py < -60 || py > H + 60) continue
-      const lit = lens && yr >= p.born && yr <= p.died
+      const lit = lens && yr >= p.born && yr <= (p.died ?? YEAR_MAX)
       hits.push({ id: p.id, x: px, y: py })
       if (medallions) {
         const dim = lens && !lit

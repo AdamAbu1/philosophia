@@ -56,6 +56,11 @@ describe('yearForSelection', () => {
     expect(yearForSelection(kant, 1770)).toBe(1770)
     expect(yearForSelection(kant, 1900)).toBe(1900)
   })
+
+  it('jumps to the present for living thinkers', () => {
+    const searle = PHILOSOPHERS.find(p => p.id === 'searle')
+    expect(yearForSelection(searle, -650)).toBe(YEAR_MAX)
+  })
 })
 
 describe('place data', () => {
@@ -69,7 +74,7 @@ describe('place data', () => {
   it('year range covers every lifetime', () => {
     for (const p of PHILOSOPHERS) {
       expect(p.born).toBeGreaterThanOrEqual(YEAR_MIN)
-      expect(p.died).toBeLessThanOrEqual(YEAR_MAX)
+      if (p.died != null) expect(p.died).toBeLessThanOrEqual(YEAR_MAX)
     }
   })
 })

@@ -58,4 +58,8 @@ export const EDGES = {
   'mill>rawls': 'The liberty principle inherited; the utilitarian foundation refused.',
   'nietzsche>foucault': 'Genealogy: asking of every value and institution, what history produced this?',
   'marx>foucault': 'Power taken seriously — then found everywhere, not just in the economy.',
+  'wittgenstein>searle': 'Meaning as use, carried from ordinary-language Oxford into a systematic theory of speech acts.',
+  'leibniz>kripke': 'Possible worlds, coined in seventeenth-century theodicy, made into exact semantics for necessity.',
+  'russell>kripke': 'The description theory of names — received as orthodoxy, dismantled in three lectures.',
+  'wittgenstein>kripke': 'The rule-following passages, read into "Kripkenstein" — the boldest skeptical paradox of the century.',
 }

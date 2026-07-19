@@ -2,7 +2,7 @@
 import { geoDistance } from 'd3-geo'
 
 export const YEAR_MIN = -650
-export const YEAR_MAX = 2015
+export const YEAR_MAX = 2026
 
 // Era label for the scrubber readout: latest era whose start we've passed.
 export function eraFor(year, eras) {
@@ -37,8 +37,8 @@ export function displayCoords(philosophers) {
   return out
 }
 
-// When a jump targets someone not yet born at the current scrub year,
-// move time to the end of their life so they and their world are visible.
+// When a jump targets someone not yet born at the current scrub year, move
+// time to the end of their life (or the present, for living thinkers).
 export function yearForSelection(p, year) {
-  return year < p.born ? p.died : year
+  return year < p.born ? (p.died ?? YEAR_MAX) : year
 }

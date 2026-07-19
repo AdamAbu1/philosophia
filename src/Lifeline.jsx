@@ -1,5 +1,6 @@
 import { byId, ERAS } from './data.js'
-import { YEAR_MIN, YEAR_MAX, fmtYear } from './geo.js'
+import { YEAR_MIN, YEAR_MAX } from './geo.js'
+import { fmtRange } from './format.js'
 
 // The "timeline, somewhere else": a small engraved strip inside each entry
 // showing the thinker's lifespan against the eras, with influences (above)
@@ -11,7 +12,8 @@ const x = year => PAD + ((year - YEAR_MIN) / (YEAR_MAX - YEAR_MIN)) * (LW - 2 * 
 const TICKS = [-500, 0, 500, 1000, 1500, 2000]
 
 export default function Lifeline({ philosopher: p, onJump }) {
-  const mid = q => x((q.born + q.died) / 2)
+  const endOf = q => q.died ?? YEAR_MAX
+  const mid = q => x((q.born + endOf(q)) / 2)
   return (
     <svg className="lifeline" viewBox={`0 0 ${LW} ${LH}`}>
       {ERAS.map((e, i) => {
@@ -39,14 +41,14 @@ export default function Lifeline({ philosopher: p, onJump }) {
           </text>
         </g>
       ))}
-      <rect className="ll-bar" x={x(p.born)} y="27" width={Math.max(3, x(p.died) - x(p.born))} height="8" rx="2">
-        <title>{`${p.name} · ${fmtYear(p.born)}–${fmtYear(p.died)}`}</title>
+      <rect className="ll-bar" x={x(p.born)} y="27" width={Math.max(3, x(endOf(p)) - x(p.born))} height="8" rx="2">
+        <title>{`${p.name} · ${fmtRange(p)}`}</title>
       </rect>
       {p.influences.map(id => {
         const q = byId[id]
         return (
           <circle key={id} className="ll-dot infl" cx={mid(q)} cy="19" r="4.5" onClick={() => onJump(id)}>
-            <title>{`influenced by ${q.name} · ${fmtYear(q.born)}–${fmtYear(q.died)}`}</title>
+            <title>{`influenced by ${q.name} · ${fmtRange(q)}`}</title>
           </circle>
         )
       })}
@@ -54,7 +56,7 @@ export default function Lifeline({ philosopher: p, onJump }) {
         const q = byId[id]
         return (
           <circle key={id} className="ll-dot heir" cx={mid(q)} cy="43" r="4.5" onClick={() => onJump(id)}>
-            <title>{`went on to influence ${q.name} · ${fmtYear(q.born)}–${fmtYear(q.died)}`}</title>
+            <title>{`went on to influence ${q.name} · ${fmtRange(q)}`}</title>
           </circle>
         )
       })}

@@ -75,7 +75,7 @@ describe('philosopher data schema', () => {
       expect(p.id).toBeTruthy()
       expect(p.name).toBeTruthy()
       expect(typeof p.born).toBe('number')
-      expect(typeof p.died).toBe('number')
+      expect(p.died === null || typeof p.died === 'number', `${p.id} died`).toBe(true)
       expect(p.school).toBeTruthy()
       expect(p.blurb.length).toBeGreaterThan(40)
       expect(p.line).toBeTruthy()
@@ -92,8 +92,15 @@ describe('philosopher data schema', () => {
     }
   })
 
-  it('birth precedes death', () => {
-    for (const p of PHILOSOPHERS) expect(p.born).toBeLessThan(p.died)
+  it('birth precedes death for closed lives', () => {
+    for (const p of PHILOSOPHERS) {
+      if (p.died != null) expect(p.born).toBeLessThan(p.died)
+    }
+  })
+
+  it('living thinkers are explicitly marked with died: null', () => {
+    const living = PHILOSOPHERS.filter(p => p.died === null).map(p => p.id)
+    expect(living).toEqual(['searle'])
   })
 
   it('every era reference resolves', () => {

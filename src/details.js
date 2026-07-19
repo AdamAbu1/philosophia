@@ -481,4 +481,24 @@ export const DETAILS = {
     works: ['Madness and Civilization (1961)', 'The Order of Things (1966)', 'Discipline and Punish (1975)', 'The History of Sexuality (1976–84)'],
     legacy: 'The most cited author in the humanities; every analysis of surveillance, normalization, and identity’s history speaks his dialect.',
   },
+  searle: {
+    bio: 'Denver-born and Oxford-trained under J. L. Austin, Searle taught at Berkeley from 1959, where he was an early faculty voice in the Free Speech Movement. In 2019 the university revoked his emeritus status after determining he had violated its sexual-harassment policies — a finding that shadows five decades at the center of philosophy of mind and language.',
+    ideas: [
+      { title: 'Speech acts', text: 'Saying is doing: promising, ordering, and christening are actions performed in words, governed by constitutive rules — a theory that reshaped linguistics and law.' },
+      { title: 'The Chinese Room', text: 'A person following rules to shuffle Chinese symbols produces perfect answers while understanding nothing. Syntax alone cannot generate semantics — the most contested thought experiment in the debate over machine minds.' },
+      { title: 'Institutional reality', text: 'Money, property, and governments exist because we collectively accept that X counts as Y in context C — a social ontology built out of status functions.' },
+    ],
+    works: ['Speech Acts (1969)', '"Minds, Brains, and Programs" (1980)', 'Intentionality (1983)', 'The Construction of Social Reality (1995)'],
+    legacy: 'The Chinese Room still frames every argument about whether machines understand anything — newly urgent in the age of language models.',
+  },
+  kripke: {
+    bio: 'An Omaha rabbi’s son born on Long Island, Kripke proved a completeness theorem for modal logic while still in high school — legend has an inquiry from Harvard answered that his mother said he should finish school first. In 1970 at Princeton he delivered the three Naming and Necessity lectures without a page of notes; by his death in 2022 he was routinely ranked among the most influential philosophers of the past century.',
+    ideas: [
+      { title: 'Rigid designation', text: 'A name picks out the same individual in every possible world, its reference fixed by a historical chain of use rather than by descriptions in the head. The reigning theory of names since Frege and Russell fell in an afternoon.' },
+      { title: 'The necessary a posteriori', text: 'That water is H2O is necessary — yet it took science to discover it. Necessity belongs to the world and apriority to knowers, and prying the two apart relaunched metaphysics.' },
+      { title: 'Kripkenstein', text: 'His reading of Wittgenstein: no fact about you fixes that by "plus" you ever meant addition — a skeptical paradox about meaning itself, answered only in communal practice.' },
+    ],
+    works: ['"A Completeness Theorem in Modal Logic" (1959)', 'Naming and Necessity (1972/1980)', 'Wittgenstein on Rules and Private Language (1982)', 'Philosophical Troubles (2011)'],
+    legacy: 'Analytic metaphysics exists again because of him; debates about reference, essence, and consciousness still argue in his vocabulary.',
+  },
 }
