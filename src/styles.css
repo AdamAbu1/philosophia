@@ -10,13 +10,6 @@ header {
 }
 header h1 { font-size: 17px; letter-spacing: .12em; font-weight: 700; }
 header h1 span { color: #9ca3af; font-weight: 400; letter-spacing: 0; font-size: 13px; margin-left: 8px; }
-.tabs { margin-left: auto; display: flex; gap: 6px; }
-.tab {
-  font-size: 12.5px; padding: 6px 14px; border: 1px solid #d1d5db; background: #fff;
-  border-radius: 8px; cursor: pointer; color: #374151;
-}
-.tab.on { background: #4F46E5; border-color: #4F46E5; color: #fff; }
-
 .eranav { display: flex; gap: 6px; flex-wrap: wrap; padding: 12px 24px; border-bottom: 1px solid #f0f1f3; }
 .eranav button {
   font-size: 11.5px; padding: 4px 10px; border: 1px solid #e5e7eb; background: #fafafa;
@@ -100,32 +93,3 @@ header h1 span { color: #9ca3af; font-weight: 400; letter-spacing: 0; font-size:
 }
 .inf button:hover { border-color: #4F46E5; color: #4F46E5; }
 
-.quizview { padding: 34px 24px; }
-.qcard {
-  max-width: 560px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 14px;
-  padding: 26px; box-shadow: 0 4px 18px rgba(0,0,0,.04);
-}
-.qmeta { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-.qmeta .cnt { font-size: 11.5px; color: #6b7280; }
-.qmeta .qtype {
-  margin-left: auto; font-size: 10px; letter-spacing: .04em; color: #6b7280;
-  border: 1px solid #e5e7eb; border-radius: 999px; padding: 2px 8px;
-}
-.dots { display: flex; gap: 5px; }
-.dots i { width: 7px; height: 7px; border-radius: 50%; background: #e5e7eb; }
-.dots i.done { background: #4F46E5; }
-.qtext { font-size: 16.5px; font-weight: 600; margin-bottom: 18px; line-height: 1.4; }
-.opts { display: grid; gap: 8px; }
-.opt {
-  text-align: left; font-size: 13.5px; padding: 11px 14px; border: 1px solid #d1d5db;
-  border-radius: 9px; background: #fff; cursor: pointer;
-}
-.opt:hover:enabled { border-color: #4F46E5; }
-.opt.ok { border-color: #16a34a; background: #f0fdf4; color: #166534; font-weight: 600; }
-.opt.bad { border-color: #dc2626; background: #fef2f2; color: #991b1b; }
-.opt:disabled { cursor: default; }
-.qnext {
-  margin-top: 16px; padding: 9px 22px; font-size: 13px; border-radius: 8px; border: none;
-  background: #4F46E5; color: #fff; cursor: pointer;
-}
-.qnext:disabled { background: #c7cbd4; cursor: default; }

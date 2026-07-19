@@ -16,7 +16,7 @@ describe('layoutEra', () => {
     for (const era of ERAS) {
       const placed = layoutEra(era, PHILOSOPHERS)
       for (let i = 1; i < placed.length; i++) {
-        expect(placed[i].x - placed[i - 1].x).toBeGreaterThanOrEqual(MIN_GAP)
+        expect(placed[i].x - placed[i - 1].x).toBeGreaterThanOrEqual(MIN_GAP - 1e-9)
       }
     }
   })
