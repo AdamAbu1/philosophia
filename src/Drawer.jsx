@@ -9,11 +9,7 @@ export default function Drawer({ philosopher: p, onClose, onJump }) {
           <button className="close" onClick={onClose} aria-label="Close">
             ×
           </button>
-          <div className="portrait">
-            engraved portrait
-            <br />
-            coming soon
-          </div>
+          <img className="portrait-img" src={p.portrait} alt={`Engraved portrait of ${p.name}`} />
           <h3>{p.name}</h3>
           <div className="dates">{fmtRange(p)}</div>
           <div className="chips">

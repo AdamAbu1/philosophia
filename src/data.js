@@ -175,7 +175,11 @@ const WESTERN = [
     line: 'Power is everywhere.', influences: ['nietzsche', 'marx'] },
 ]
 
-export const PHILOSOPHERS = WESTERN.map(p => ({ ...p, tradition: 'western', portrait: null }))
+export const PHILOSOPHERS = WESTERN.map(p => ({
+  ...p,
+  tradition: 'western',
+  portrait: `portraits/${p.id}.png`,
+}))
 
 export const byId = Object.fromEntries(PHILOSOPHERS.map(p => [p.id, p]))
 export const eraById = Object.fromEntries(ERAS.map(e => [e.id, e]))

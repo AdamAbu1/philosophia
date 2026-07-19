@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest'
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { ERAS, PHILOSOPHERS, byId, eraById } from '../src/data.js'
 
 describe('philosopher data schema', () => {
@@ -18,7 +20,13 @@ describe('philosopher data schema', () => {
       expect(p.line).toBeTruthy()
       expect(Array.isArray(p.influences)).toBe(true)
       expect(p.tradition).toBe('western')
-      expect(p).toHaveProperty('portrait')
+      expect(p.portrait).toBe(`portraits/${p.id}.png`)
+    }
+  })
+
+  it('every portrait file exists on disk', () => {
+    for (const p of PHILOSOPHERS) {
+      expect(existsSync(join(process.cwd(), 'public', p.portrait)), p.id).toBe(true)
     }
   })
 
