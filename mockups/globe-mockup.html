@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Philosophia — globe mockup v0.1</title>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+    background:
+      radial-gradient(ellipse at 18% 12%, rgba(140,110,60,.07), transparent 42%),
+      radial-gradient(ellipse at 84% 78%, rgba(140,110,60,.08), transparent 38%),
+      #f3ecdb;
+    color: #2b2620; min-height: 100vh;
+  }
+  header { text-align: center; padding: 26px 20px 4px; }
+  header h1 { font-size: 21px; letter-spacing: .28em; font-weight: 600; }
+  header .sub {
+    font-style: italic; color: #7a6f5d; font-size: 13.5px; margin-top: 4px; letter-spacing: .04em;
+  }
+  .wf { display: inline-block; font-size: 10px; letter-spacing: .1em; color: #8d8170;
+        border: 1px solid #c9bda4; border-radius: 999px; padding: 2px 10px; margin-top: 8px; }
+  .stage { display: flex; justify-content: center; }
+  svg { display: block; }
+  .scrub {
+    max-width: 720px; margin: 2px auto 0; padding: 0 24px; text-align: center;
+  }
+  .yearline { display: flex; align-items: center; gap: 14px; justify-content: center; }
+  .playbtn {
+    width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid #4a4237;
+    background: transparent; color: #4a4237; font-size: 13px; cursor: pointer; flex: none;
+    font-family: inherit;
+  }
+  .playbtn:hover { background: rgba(74,66,55,.08); }
+  input[type=range] {
+    flex: 1; appearance: none; height: 2px; background: #4a4237; outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    appearance: none; width: 15px; height: 15px; border-radius: 50%;
+    background: #f3ecdb; border: 2px solid #2b2620; cursor: pointer;
+  }
+  .yearread { width: 150px; flex: none; text-align: left; }
+  .yearread .yr { font-size: 21px; font-variant-numeric: tabular-nums; }
+  .yearread .era { font-size: 11px; font-style: italic; color: #7a6f5d; }
+  .ticks { display: flex; max-width: 720px; margin: 2px auto 0; padding: 0 24px 0 72px; }
+  .hint { text-align: center; font-size: 11.5px; font-style: italic; color: #8d8170; margin-top: 10px; }
+
+  .stub {
+    max-width: 640px; margin: 16px auto 40px; padding: 18px 22px; display: none;
+    border-top: 1px solid #c9bda4; border-bottom: 1px solid #c9bda4; text-align: center;
+  }
+  .stub.on { display: block; }
+  .stub h3 { font-size: 19px; letter-spacing: .06em; }
+  .stub .d { font-size: 12.5px; color: #7a6f5d; margin: 2px 0 8px; }
+  .stub .l { font-style: italic; font-size: 14px; }
+  .stub .note { font-size: 10.5px; color: #8d8170; margin-top: 10px; letter-spacing: .05em; }
+</style>
+</head>
+<body>
+<header>
+  <h1>PHILOSOPHIA</h1>
+  <div class="sub">a globe of philosophy · six centuries before the common era to the present</div>
+  <div class="wf">globe mockup v0.1 — drag to turn · scrub or play through time · click a point</div>
+</header>
+
+<div class="stage"><svg id="globe" width="820" height="560"></svg></div>
+
+<div class="scrub">
+  <div class="yearline">
+    <button class="playbtn" id="play">▶</button>
+    <input type="range" id="year" min="-650" max="2015" value="-650" step="1">
+    <div class="yearread"><div class="yr" id="yr">650 BCE</div><div class="era" id="eraname">Pre-Socratic</div></div>
+  </div>
+</div>
+<div class="hint" id="hint">press play — points kindle where each thinker was born, and dim to embers after their death</div>
+
+<div class="stub" id="stub">
+  <h3 id="sname"></h3>
+  <div class="d" id="sdates"></div>
+  <div class="l" id="sline"></div>
+  <div class="note">IN THE APP: clicking opens the full entry panel — bio · key ideas · works · legacy · influence chips</div>
+</div>
+
+<script>
+const P = [
+  ['thales','Thales',-624,-546,'Miletus',37.53,27.28,'What is everything made of?'],
+  ['anaximander','Anaximander',-610,-546,'Miletus',37.53,27.28,'The origin of things is the boundless.'],
+  ['pythagoras','Pythagoras',-570,-495,'Samos',37.75,26.83,'Reality is number.'],
+  ['heraclitus','Heraclitus',-535,-475,'Ephesus',37.95,27.37,'No one steps in the same river twice.'],
+  ['parmenides','Parmenides',-515,-450,'Elea',40.16,15.15,'What is, is; what is not, is not.'],
+  ['socrates','Socrates',-470,-399,'Athens',37.98,23.73,'The unexamined life is not worth living.'],
+  ['democritus','Democritus',-460,-370,'Abdera',40.94,24.98,'Atoms and void.'],
+  ['plato','Plato',-428,-348,'Athens',37.98,23.73,'The visible world is a shadow of the real one.'],
+  ['diogenes','Diogenes',-412,-323,'Sinope',42.03,35.15,'I am a citizen of the world.'],
+  ['aristotle','Aristotle',-384,-322,'Stagira',40.53,23.75,'All men by nature desire to know.'],
+  ['pyrrho','Pyrrho',-360,-270,'Elis',37.89,21.37,'Suspend judgment, and calm follows.'],
+  ['epicurus','Epicurus',-341,-270,'Samos',37.75,26.83,'Death is nothing to us.'],
+  ['zeno','Zeno of Citium',-334,-262,'Citium',34.92,33.63,'Live according to nature.'],
+  ['marcus','Marcus Aurelius',121,180,'Rome',41.89,12.48,'You have power over your mind, not outside events.'],
+  ['plotinus','Plotinus',204,270,'Lycopolis',27.18,31.18,'The soul’s journey is the return to the One.'],
+  ['augustine','Augustine',354,430,'Thagaste',36.29,7.95,'Our heart is restless until it rests in you.'],
+  ['anselm','Anselm',1033,1109,'Aosta',45.74,7.32,'Faith seeking understanding.'],
+  ['aquinas','Thomas Aquinas',1225,1274,'Roccasecca',41.55,13.67,'Reason and faith are two roads to one truth.'],
+  ['ockham','William of Ockham',1287,1347,'Ockham, Surrey',51.30,-0.45,'The simplest explanation is best.'],
+  ['machiavelli','Machiavelli',1469,1527,'Florence',43.77,11.25,'Study politics as it is, not as it ought to be.'],
+  ['bacon','Francis Bacon',1561,1626,'London',51.51,-0.13,'Knowledge is power.'],
+  ['hobbes','Thomas Hobbes',1588,1679,'Malmesbury',51.58,-2.10,'Without order, life is nasty, brutish, and short.'],
+  ['descartes','Descartes',1596,1650,'La Haye, Touraine',46.99,0.70,'I think, therefore I am.'],
+  ['spinoza','Spinoza',1632,1677,'Amsterdam',52.37,4.90,'God, or Nature.'],
+  ['locke','John Locke',1632,1704,'Wrington',51.36,-2.76,'The mind begins as a blank slate.'],
+  ['leibniz','Leibniz',1646,1716,'Leipzig',51.34,12.37,'Why is there something rather than nothing?'],
+  ['berkeley','George Berkeley',1685,1753,'Kilkenny',52.65,-7.25,'To be is to be perceived.'],
+  ['hume','David Hume',1711,1776,'Edinburgh',55.95,-3.19,'Reason is the slave of the passions.'],
+  ['rousseau','Rousseau',1712,1778,'Geneva',46.20,6.14,'Man is born free, and everywhere he is in chains.'],
+  ['kant','Immanuel Kant',1724,1804,'Königsberg',54.71,20.51,'Dare to know.'],
+  ['bentham','Jeremy Bentham',1748,1832,'London',51.51,-0.13,'The greatest happiness of the greatest number.'],
+  ['wollstonecraft','Mary Wollstonecraft',1759,1797,'London',51.52,-0.07,'Not power over men, but over themselves.'],
+  ['hegel','Hegel',1770,1831,'Stuttgart',48.78,9.18,'History is spirit coming to know itself.'],
+  ['schopenhauer','Schopenhauer',1788,1860,'Danzig',54.35,18.65,'The world is will.'],
+  ['mill','J. S. Mill',1806,1873,'London',51.53,-0.11,'Over himself, the individual is sovereign.'],
+  ['kierkegaard','Kierkegaard',1813,1855,'Copenhagen',55.68,12.57,'Truth is subjectivity.'],
+  ['marx','Karl Marx',1818,1883,'Trier',49.75,6.64,'The point is to change it.'],
+  ['james','William James',1842,1910,'New York',40.71,-74.01,'Truth is what works.'],
+  ['nietzsche','Nietzsche',1844,1900,'Röcken',51.25,12.11,'God is dead.'],
+  ['russell','Bertrand Russell',1872,1970,'Trellech, Wales',51.74,-2.73,'Logic is the essence of philosophy.'],
+  ['wittgenstein','Wittgenstein',1889,1951,'Vienna',48.21,16.37,'Whereof one cannot speak, thereof one must be silent.'],
+  ['heidegger','Heidegger',1889,1976,'Messkirch',47.99,9.11,'The question is what it means to be.'],
+  ['sartre','Sartre',1905,1980,'Paris',48.86,2.35,'Existence precedes essence.'],
+  ['arendt','Hannah Arendt',1906,1975,'Hanover',52.37,9.72,'Evil can be banal.'],
+  ['beauvoir','Simone de Beauvoir',1908,1986,'Paris',48.86,2.35,'One is not born, but rather becomes, a woman.'],
+  ['camus','Albert Camus',1913,1960,'Mondovi, Algeria',36.68,7.75,'One must imagine Sisyphus happy.'],
+  ['rawls','John Rawls',1921,2002,'Baltimore',39.29,-76.61,'Justice is fairness chosen behind a veil of ignorance.'],
+  ['foucault','Michel Foucault',1926,1984,'Poitiers',46.58,0.34,'Power is everywhere.'],
+].map(([id,name,born,died,place,lat,lon,line]) => ({ id,name,born,died,place,lat,lon,line }))
+
+// nudge apart same-city points so they don't stack
+const seen = {}
+P.forEach(p => {
+  const k = p.lat.toFixed(1) + ',' + p.lon.toFixed(1)
+  const n = (seen[k] = (seen[k] || 0) + 1) - 1
+  if (n > 0) { p.lon += 0.9 * Math.cos(n * 2.4); p.lat += 0.9 * Math.sin(n * 2.4) }
+})
+
+const ERAS = [
+  { name: 'Pre-Socratic', start: -650 }, { name: 'Classical', start: -480 },
+  { name: 'Hellenistic & Roman', start: -300 }, { name: 'Medieval', start: 476 },
+  { name: 'Renaissance & Early Modern', start: 1400 }, { name: 'Enlightenment', start: 1700 },
+  { name: '19th Century', start: 1800 }, { name: '20th Century', start: 1900 },
+]
+const eraFor = y => [...ERAS].reverse().find(e => y >= e.start)?.name || ''
+const fmtYear = y => (y < 0 ? `${-y} BCE` : `${y}`)
+
+const W = 820, H = 560, R = 252
+const svg = d3.select('#globe')
+const defs = svg.append('defs')
+// engraved ocean: fine horizontal hatching
+const oc = defs.append('pattern').attr('id', 'ocean').attr('width', 4).attr('height', 4).attr('patternUnits', 'userSpaceOnUse')
+oc.append('rect').attr('width', 4).attr('height', 4).attr('fill', '#efe6d1')
+oc.append('line').attr('x2', 4).attr('y1', 2).attr('y2', 2).attr('stroke', '#8a7c62').attr('stroke-width', .45).attr('opacity', .5)
+// stippled land
+const ld = defs.append('pattern').attr('id', 'land').attr('width', 5).attr('height', 5).attr('patternUnits', 'userSpaceOnUse')
+ld.append('rect').attr('width', 5).attr('height', 5).attr('fill', '#e7dcc2')
+ld.append('circle').attr('cx', 1.2).attr('cy', 1.4).attr('r', .5).attr('fill', '#7a6b50').attr('opacity', .55)
+ld.append('circle').attr('cx', 3.6).attr('cy', 3.8).attr('r', .5).attr('fill', '#7a6b50').attr('opacity', .4)
+defs.append('clipPath').attr('id', 'medclip').append('circle').attr('r', 26)
+
+const projection = d3.geoOrthographic().translate([W / 2, H / 2]).scale(R).rotate([-22, -40]).clipAngle(90)
+const path = d3.geoPath(projection)
+const g = svg.append('g')
+g.append('path').attr('id', 'sphere').attr('fill', 'url(#ocean)').attr('stroke', '#2b2620').attr('stroke-width', 1.6)
+g.append('path').attr('id', 'sphere2').attr('fill', 'none').attr('stroke', '#2b2620').attr('stroke-width', .5).attr('transform', `translate(${W / 2},${H / 2}) scale(1.018) translate(${-W / 2},${-H / 2})`)
+g.append('path').attr('id', 'grat').attr('fill', 'none').attr('stroke', '#8a7c62').attr('stroke-width', .35).attr('stroke-dasharray', '1,2.5').attr('opacity', .7)
+g.append('path').attr('id', 'landp').attr('fill', 'url(#land)').attr('stroke', '#3a332a').attr('stroke-width', .7)
+const ptsG = g.append('g')
+const medG = g.append('g')
+const graticule = d3.geoGraticule10()
+
+let land = null, year = -650, playing = false, selected = null, idleSpin = true
+
+fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json')
+  .then(r => r.json())
+  .then(t => { land = topojson.feature(t, t.objects.land); render() })
+
+function visibleOnFront(p) {
+  return d3.geoDistance([p.lon, p.lat], [-projection.rotate()[0], -projection.rotate()[1]]) < Math.PI / 2 - 0.02
+}
+
+function render() {
+  svg.select('#sphere').attr('d', path({ type: 'Sphere' }))
+  svg.select('#sphere2').attr('d', path({ type: 'Sphere' }))
+  svg.select('#grat').attr('d', path(graticule))
+  if (land) svg.select('#landp').attr('d', path(land))
+
+  const shown = P.filter(p => p.born <= year && visibleOnFront(p))
+  const pts = ptsG.selectAll('g.pt').data(shown, d => d.id)
+  const enter = pts.enter().append('g').attr('class', 'pt').style('cursor', 'pointer')
+    .on('click', (e, d) => select(d))
+  enter.append('circle').attr('class', 'c')
+  enter.append('text').attr('class', 't')
+    .attr('text-anchor', 'middle').attr('font-size', 9.5)
+    .attr('font-family', 'Georgia, serif').attr('fill', '#2b2620')
+  pts.exit().remove()
+
+  ptsG.selectAll('g.pt').each(function (d) {
+    const [x, y] = projection([d.lon, d.lat])
+    const alive = year >= d.born && year <= d.died
+    const el = d3.select(this).attr('transform', `translate(${x},${y})`)
+    el.select('.c')
+      .attr('r', alive ? 5 : 2.6)
+      .attr('fill', alive ? '#2b2620' : 'none')
+      .attr('stroke', '#2b2620')
+      .attr('stroke-width', alive ? 1.4 : 1)
+      .attr('opacity', alive ? .95 : .5)
+    el.select('.t')
+      .text(alive ? d.name : '')
+      .attr('dy', -10)
+      .attr('opacity', .85)
+  })
+
+  // selected medallion: circular-clipped engraved portrait
+  const sel = selected && P.find(p => p.id === selected) && visibleOnFront(P.find(p => p.id === selected)) && P.find(p => p.id === selected).born <= year
+    ? [P.find(p => p.id === selected)] : []
+  const med = medG.selectAll('g.med').data(sel, d => d.id)
+  const mEnter = med.enter().append('g').attr('class', 'med')
+  mEnter.append('circle').attr('r', 29).attr('fill', '#f3ecdb').attr('stroke', '#2b2620').attr('stroke-width', 1.6)
+  mEnter.append('image').attr('clip-path', 'url(#medclip)')
+    .attr('x', -26).attr('y', -33).attr('width', 52)
+    .attr('href', d => '../public/portraits/' + d.id + '.png')
+  mEnter.append('circle').attr('r', 26).attr('fill', 'none').attr('stroke', '#2b2620').attr('stroke-width', .8)
+  mEnter.append('text').attr('text-anchor', 'middle').attr('dy', 44)
+    .attr('font-size', 11).attr('font-family', 'Georgia, serif')
+    .attr('font-variant', 'small-caps').attr('fill', '#2b2620')
+    .text(d => d.name + ' · ' + d.place)
+  med.exit().remove()
+  medG.selectAll('g.med').attr('transform', d => {
+    const [x, y] = projection([d.lon, d.lat]); return `translate(${x},${y})`
+  })
+}
+
+function select(d) {
+  selected = d.id
+  idleSpin = false
+  document.getElementById('stub').classList.add('on')
+  document.getElementById('sname').textContent = d.name
+  document.getElementById('sdates').textContent = `${fmtYear(d.born)} – ${fmtYear(d.died)} · born at ${d.place}`
+  document.getElementById('sline').textContent = '“' + d.line + '”'
+  render()
+}
+
+// drag to rotate
+svg.call(d3.drag().on('start', () => { idleSpin = false }).on('drag', e => {
+  const r = projection.rotate()
+  projection.rotate([r[0] + e.dx * .28, Math.max(-75, Math.min(75, r[1] - e.dy * .28))])
+  render()
+}))
+
+// time scrubbing
+const slider = document.getElementById('year')
+function setYear(y, fromSlider) {
+  year = Math.round(y)
+  if (!fromSlider) slider.value = year
+  document.getElementById('yr').textContent = fmtYear(year)
+  document.getElementById('eraname').textContent = eraFor(year)
+  render()
+}
+slider.addEventListener('input', () => { idleSpin = false; setYear(+slider.value, true) })
+
+// play: sweep through time, drifting the globe gently westward as thought migrates
+const playBtn = document.getElementById('play')
+playBtn.addEventListener('click', () => {
+  playing = !playing
+  playBtn.textContent = playing ? '❚❚' : '▶'
+  idleSpin = false
+  if (playing && year >= 2015) setYear(-650)
+})
+
+d3.timer(() => {
+  if (playing) {
+    if (year >= 2015) { playing = false; playBtn.textContent = '▶' }
+    else {
+      setYear(year + 3.2)
+      const t = (year + 650) / 2665
+      const targetLon = -22 + t * 38   // 22E → drift toward Atlantic by the modern era
+      const r = projection.rotate()
+      projection.rotate([r[0] + (targetLon - r[0]) * .02, r[1]])
+    }
+  } else if (idleSpin) {
+    const r = projection.rotate()
+    projection.rotate([r[0] + .022, r[1]])
+    render()
+  }
+})
+</script>
+</body>
+</html>
