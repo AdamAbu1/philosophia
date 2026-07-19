@@ -288,6 +288,7 @@ export const PHILOSOPHERS = WESTERN.map(p => ({
   portrait: `portraits/${p.id}.png`,
   thumb: `portraits/thumbs/${p.id}.png`,
   place: PLACES[p.id],
+  alias: LINKS[p.id].wiki.replaceAll('_', ' '),
   influenced: WESTERN.filter(q => q.influences.includes(p.id)).map(q => q.id),
   links: [
     { label: 'Stanford Encyclopedia', url: `https://plato.stanford.edu/entries/${LINKS[p.id].sep}/` },

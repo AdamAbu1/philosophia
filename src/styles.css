@@ -17,9 +17,31 @@ body {
   min-height: 100vh;
 }
 
-header { text-align: center; padding: 26px 20px 4px; }
+header { position: relative; text-align: center; padding: 26px 20px 4px; }
 header h1 { font-size: 22px; letter-spacing: .28em; font-weight: 600; }
 header .sub { font-style: italic; color: var(--faded); font-size: 13.5px; margin-top: 4px; letter-spacing: .04em; }
+
+/* ---- search ---- */
+.searchbox { position: absolute; right: 26px; top: 30px; width: 210px; text-align: left; }
+.searchbox input {
+  width: 100%; font-family: inherit; font-size: 13px; color: var(--ink);
+  background: transparent; border: none; border-bottom: 1px solid var(--rule);
+  padding: 4px 2px; outline: none;
+}
+.searchbox input::placeholder { font-style: italic; color: var(--faint); }
+.searchbox input:focus { border-bottom-color: var(--ink-soft); }
+.search-results {
+  position: absolute; left: 0; right: -40px; top: 100%; margin-top: 6px; z-index: 30;
+  list-style: none; background: var(--paper); border: 1px solid var(--rule);
+  box-shadow: 0 6px 22px rgba(60, 45, 20, .18); padding: 4px 0;
+}
+.search-results li { padding: 7px 12px; cursor: pointer; }
+.search-results li.sel { background: rgba(74, 66, 55, .08); }
+.search-results .rname { display: block; font-size: 13.5px; font-variant: small-caps; letter-spacing: .04em; }
+.search-results .rmeta { display: block; font-size: 11px; color: var(--faded); font-style: italic; }
+@media (max-width: 900px) {
+  .searchbox { position: static; margin: 12px auto 0; }
+}
 
 /* ---- globe ---- */
 .globe-wrap { max-width: 940px; margin: 0 auto; padding: 0 12px; }
