@@ -23,6 +23,7 @@ header .sub { font-style: italic; color: var(--faded); font-size: 13.5px; margin
 
 /* ---- globe ---- */
 .globe-wrap { max-width: 940px; margin: 0 auto; padding: 0 12px; }
+.globe-box { position: relative; }
 svg.globe { display: block; width: 100%; height: auto; touch-action: none; cursor: grab; }
 svg.globe:active { cursor: grabbing; }
 .sphere { fill: url(#ocean); stroke: var(--ink); stroke-width: 1.6; }
@@ -30,12 +31,33 @@ svg.globe:active { cursor: grabbing; }
 .landp { fill: url(#landfill); stroke: #3a332a; stroke-width: .7; }
 .pt { cursor: pointer; }
 .pt circle { stroke: var(--ink); }
-.pt.alive circle { fill: var(--ink); stroke-width: 1.4; opacity: .95; }
-.pt.ember circle { fill: none; stroke-width: 1; opacity: .5; }
+.pt.all circle { fill: var(--ink); stroke-width: 1.2; opacity: .82; }
+.pt.lit circle { fill: var(--ink); stroke-width: 1.4; opacity: .95; }
+.pt.faded circle { fill: none; stroke-width: 1; opacity: .38; }
 .pt text {
   font-size: 10px; fill: var(--ink); pointer-events: none;
   paint-order: stroke; stroke: var(--paper); stroke-width: 2.5px; stroke-linejoin: round;
 }
+.mini-bg { fill: var(--paper); stroke: var(--ink); stroke-width: 1; opacity: .95; }
+.mini-ring { fill: none; stroke: var(--ink); stroke-width: .6; }
+.pt.faded .mini-bg, .pt.faded image, .pt.faded .mini-ring { opacity: .35; }
+.mini-name {
+  font-size: 9px; fill: var(--ink); pointer-events: none;
+  paint-order: stroke; stroke: var(--paper); stroke-width: 2.5px; stroke-linejoin: round;
+}
+.zoomctl { position: absolute; right: 14px; top: 14px; display: flex; flex-direction: column; gap: 6px; }
+.zoomctl button {
+  width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--ink-soft);
+  background: var(--paper); color: var(--ink-soft); font-size: 15px; line-height: 1;
+  cursor: pointer; font-family: inherit;
+}
+.zoomctl button:hover { background: rgba(74, 66, 55, .08); }
+.lenschip {
+  flex: none; font-size: 11px; font-family: inherit; font-style: italic;
+  padding: 4px 11px; border-radius: 999px; border: 1px solid var(--rule);
+  background: transparent; color: var(--faded); cursor: pointer;
+}
+.lenschip:hover { background: rgba(74, 66, 55, .07); }
 .med { pointer-events: none; }
 .med-bg { fill: var(--paper); stroke: var(--ink); stroke-width: 1.6; }
 .med-ring { fill: none; stroke: var(--ink); stroke-width: .8; }
@@ -122,6 +144,16 @@ svg.globe:active { cursor: grabbing; }
 .detail-main .idea b { color: var(--ink); }
 .detail-main .works { margin: 0 0 4px 18px; }
 .detail-main .works li { font-size: 13.5px; line-height: 1.75; color: var(--ink-soft); }
+.lifeline { display: block; width: 100%; height: auto; margin-top: 2px; }
+.ll-band { fill: #7a6b50; opacity: .06; }
+.ll-band.odd { opacity: .12; }
+.ll-bar { fill: var(--ink); }
+.ll-tick line { stroke: var(--faint); stroke-width: 1; }
+.ll-tick text { font-size: 8px; fill: var(--faint); font-family: inherit; }
+.ll-dot { cursor: pointer; stroke: var(--ink); stroke-width: 1.2; }
+.ll-dot.infl { fill: none; }
+.ll-dot.heir { fill: var(--ink); }
+.ll-dot:hover { stroke-width: 2.2; }
 @media (max-width: 760px) {
   .detail { flex-direction: column; gap: 20px; }
   .detail-side { width: 100%; }

@@ -1,5 +1,6 @@
 import { byId, eraById } from './data.js'
 import { fmtRange } from './format.js'
+import Lifeline from './Lifeline.jsx'
 
 function ChipRow({ label, ids, onJump }) {
   if (!ids.length) return null
@@ -63,6 +64,8 @@ export default function DetailPanel({ philosopher: p, onClose, onJump }) {
         </ul>
         <h4>LEGACY</h4>
         <p className="body">{p.legacy}</p>
+        <h4>IN TIME</h4>
+        <Lifeline philosopher={p} onJump={onJump} />
       </div>
     </section>
   )

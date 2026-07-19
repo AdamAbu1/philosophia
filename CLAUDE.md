@@ -14,7 +14,8 @@ philosophy (48 thinkers), era bands, detail drawer with influence-chip jumps.
 - `src/data.js` — eras, core philosopher records + birthplace coords (PLACES); merges `details.js`, computes reverse `influenced` links
 - `src/details.js` — long-form content per thinker: bio, titled key ideas, major works, legacy (schema test-enforced)
 - `src/geo.js` — pure globe helpers (era-for-year, frontside check, same-city fan-out, jump-year rule); tested
-- `src/Globe.jsx` — THE main view: engraved SVG orthographic globe (d3-geo + bundled `assets/land-110m.json`), drag-rotate, idle spin, time scrubber with play. The old timeline strip was removed by owner decision (globe replaced it; see git history). Click-vs-drag uses a 3px movement threshold WITHOUT pointer capture — capturing on pointerdown retargets pointerup and eats point clicks; don't reintroduce it.
+- `src/Globe.jsx` — THE main view: engraved SVG orthographic globe (d3-geo + bundled `assets/land-110m.json`). ALL 48 points visible by default ("All time"); wheel/dblclick/buttons zoom (1–8×, portrait mini-medallions at zoom ≥3, names ≥4); the scrubber is a LENS, not a gate — scrubbing/play highlights the then-living and fades the rest, "all time ✕" chip resets. Owner decisions, in order: timeline strip removed for the globe; time then demoted from gate to lens. Click-vs-drag uses a 3px movement threshold WITHOUT pointer capture — capturing on pointerdown retargets pointerup and eats point clicks; don't reintroduce it.
+- `src/Lifeline.jsx` — the "timeline, somewhere else": engraved strip in each entry (lifespan vs eras, influences above / heirs below as clickable jump dots)
 - `src/DetailPanel.jsx` / `src/App.jsx` — the entry renders inline BELOW the globe (owner rejected pop-out drawer — keep it inline)
 - `src/format.js` — date formatting
 - `public/portraits/<id>.png` — engraved portraits, one per philosopher (test-enforced)

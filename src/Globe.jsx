@@ -15,28 +15,32 @@ const GRATICULE = geoGraticule10()
 const COORDS = displayCoords(PHILOSOPHERS)
 // alternate label side per thinker so dense clusters halve their collisions
 const LABEL_BELOW = Object.fromEntries(PHILOSOPHERS.map((p, i) => [p.id, i % 2 === 1]))
+const clampZoom = z => Math.max(1, Math.min(8, z))
 
 export default function Globe({ selectedId, onSelect }) {
   const [rotation, setRotation] = useState([-22, -40])
+  const [zoom, setZoom] = useState(1)
   const [year, setYear] = useState(YEAR_MIN)
+  const [lensOn, setLensOn] = useState(false)
   const [playing, setPlaying] = useState(false)
   const spinRef = useRef(true)
   const dragRef = useRef(null)
   const movedRef = useRef(false)
   const targetRef = useRef(null)
   const playRef = useRef(false)
+  const svgRef = useRef(null)
   playRef.current = playing
 
-  // Selection (click or influence-chip jump): tween the globe to the target
-  // and make sure the person exists at the current scrub year.
+  // Selection (click or influence-chip jump): tween the globe to the target.
+  // Only when the time lens is active does selection need to move the year.
   useEffect(() => {
     if (!selectedId) return
     const p = byId[selectedId]
     spinRef.current = false
     const [lon, lat] = COORDS[selectedId]
     targetRef.current = [-lon, Math.max(-75, Math.min(75, -lat))]
-    setYear(y => yearForSelection(p, y))
-  }, [selectedId])
+    if (lensOn) setYear(y => yearForSelection(p, y))
+  }, [selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // One animation loop: play sweep, rotation tween, idle spin.
   useEffect(() => {
@@ -75,20 +79,37 @@ export default function Globe({ selectedId, onSelect }) {
     return () => cancelAnimationFrame(raf)
   }, [])
 
+  // Wheel zoom needs a non-passive native listener (React's synthetic wheel is passive).
+  useEffect(() => {
+    const el = svgRef.current
+    if (!el) return
+    const onWheel = e => {
+      e.preventDefault()
+      spinRef.current = false
+      setZoom(z => clampZoom(z * Math.exp(-e.deltaY * 0.0016)))
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [])
+
   const projection = useMemo(
-    () => geoOrthographic().translate([W / 2, H / 2]).scale(R).rotate(rotation).clipAngle(90),
-    [rotation],
+    () =>
+      geoOrthographic()
+        .translate([W / 2, H / 2])
+        .scale(R * zoom)
+        .rotate(rotation)
+        .clipAngle(90),
+    [rotation, zoom],
   )
   const path = useMemo(() => geoPath(projection), [projection])
 
-  const points = PHILOSOPHERS.filter(
-    p => p.born <= year && isFrontside(COORDS[p.id], rotation),
-  ).map(p => {
+  const points = PHILOSOPHERS.filter(p => isFrontside(COORDS[p.id], rotation)).map(p => {
     const [x, y] = projection(COORDS[p.id])
-    return { p, x, y, alive: year <= p.died }
+    return { p, x, y, lit: lensOn && year >= p.born && year <= p.died }
   })
   const sel = selectedId ? points.find(d => d.p.id === selectedId) : null
   const era = eraFor(year, ERAS)
+  const medallions = zoom >= 3
 
   // No pointer capture: capturing on pointerdown retargets pointerup to the
   // svg and swallows point clicks. Instead, rotation starts only after a small
@@ -108,8 +129,8 @@ export default function Globe({ selectedId, onSelect }) {
     d.x = e.clientX
     d.y = e.clientY
     setRotation(([a, b]) => [
-      a + dx * 0.28,
-      Math.max(-75, Math.min(75, b - dy * 0.28)),
+      a + (dx * 0.28) / zoom,
+      Math.max(-75, Math.min(75, b - (dy * 0.28) / zoom)),
     ])
   }
   function onPointerUp() {
@@ -126,75 +147,115 @@ export default function Globe({ selectedId, onSelect }) {
 
   function togglePlay() {
     spinRef.current = false
-    if (!playing && year >= YEAR_MAX) setYear(YEAR_MIN)
+    if (!playing) {
+      setLensOn(true)
+      if (!lensOn || year >= YEAR_MAX) setYear(YEAR_MIN)
+    }
     setPlaying(!playing)
   }
   function onScrub(e) {
     spinRef.current = false
     setPlaying(false)
+    setLensOn(true)
     setYear(+e.target.value)
+  }
+  function allTime() {
+    setLensOn(false)
+    setPlaying(false)
   }
 
   return (
     <div className="globe-wrap">
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className="globe"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerLeave={onPointerUp}
-      >
-        <defs>
-          <pattern id="ocean" width="4" height="4" patternUnits="userSpaceOnUse">
-            <rect width="4" height="4" fill="#efe6d1" />
-            <line x2="4" y1="2" y2="2" stroke="#8a7c62" strokeWidth=".45" opacity=".5" />
-          </pattern>
-          <pattern id="landfill" width="5" height="5" patternUnits="userSpaceOnUse">
-            <rect width="5" height="5" fill="#e7dcc2" />
-            <circle cx="1.2" cy="1.4" r=".5" fill="#7a6b50" opacity=".55" />
-            <circle cx="3.6" cy="3.8" r=".5" fill="#7a6b50" opacity=".4" />
-          </pattern>
-          <clipPath id="medclip">
-            <circle r="26" />
-          </clipPath>
-        </defs>
-        <path className="sphere" d={path({ type: 'Sphere' })} />
-        <path className="grat" d={path(GRATICULE)} />
-        <path className="landp" d={path(LAND)} />
-        {points.map(d => (
-          <g
-            key={d.p.id}
-            className={`pt${d.alive ? ' alive' : ' ember'}`}
-            transform={`translate(${d.x},${d.y})`}
-            onClick={() => pointClick(d.p.id)}
-          >
-            <title>{`${d.p.name} · ${d.p.place.name} · ${fmtYear(d.p.born)}–${fmtYear(d.p.died)}`}</title>
-            <circle r={d.alive ? 5 : 2.8} />
-            {d.alive && (
-              <text dy={LABEL_BELOW[d.p.id] ? 20 : -11} textAnchor="middle">
-                {d.p.name}
+      <div className="globe-box">
+        <svg
+          ref={svgRef}
+          viewBox={`0 0 ${W} ${H}`}
+          className="globe"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerLeave={onPointerUp}
+          onDoubleClick={() => setZoom(z => clampZoom(z * 1.6))}
+        >
+          <defs>
+            <pattern id="ocean" width="4" height="4" patternUnits="userSpaceOnUse">
+              <rect width="4" height="4" fill="#efe6d1" />
+              <line x2="4" y1="2" y2="2" stroke="#8a7c62" strokeWidth=".45" opacity=".5" />
+            </pattern>
+            <pattern id="landfill" width="5" height="5" patternUnits="userSpaceOnUse">
+              <rect width="5" height="5" fill="#e7dcc2" />
+              <circle cx="1.2" cy="1.4" r=".5" fill="#7a6b50" opacity=".55" />
+              <circle cx="3.6" cy="3.8" r=".5" fill="#7a6b50" opacity=".4" />
+            </pattern>
+            <clipPath id="medclip">
+              <circle r="26" />
+            </clipPath>
+            <clipPath id="miniclip">
+              <circle r="11" />
+            </clipPath>
+          </defs>
+          <path className="sphere" d={path({ type: 'Sphere' })} />
+          <path className="grat" d={path(GRATICULE)} />
+          <path className="landp" d={path(LAND)} />
+          {points.map(d => {
+            const onScreen = d.x > -60 && d.x < W + 60 && d.y > -60 && d.y < H + 60
+            if (!onScreen) return null
+            const cls = lensOn ? (d.lit ? ' lit' : ' faded') : ' all'
+            return (
+              <g
+                key={d.p.id}
+                className={`pt${cls}`}
+                transform={`translate(${d.x},${d.y})`}
+                onClick={() => pointClick(d.p.id)}
+              >
+                <title>{`${d.p.name} · ${d.p.place.name} · ${fmtYear(d.p.born)}–${fmtYear(d.p.died)}`}</title>
+                {medallions ? (
+                  <>
+                    <circle className="mini-bg" r="13" />
+                    <image
+                      clipPath="url(#miniclip)"
+                      href={d.p.portrait}
+                      x="-11.5"
+                      y="-14.5"
+                      width="23"
+                    />
+                    <circle className="mini-ring" r="11" />
+                    {zoom >= 4 && (
+                      <text className="mini-name" dy="24" textAnchor="middle">
+                        {d.p.name}
+                      </text>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <circle r={lensOn ? (d.lit ? 5 : 2.8) : 4} />
+                    {lensOn && d.lit && (
+                      <text dy={LABEL_BELOW[d.p.id] ? 20 : -11} textAnchor="middle">
+                        {d.p.name}
+                      </text>
+                    )}
+                  </>
+                )}
+              </g>
+            )
+          })}
+          {sel && (
+            <g className="med" transform={`translate(${sel.x},${sel.y})`}>
+              <circle className="med-bg" r="30" />
+              <image clipPath="url(#medclip)" href={sel.p.portrait} x="-27" y="-34" width="54" />
+              <circle className="med-ring" r="26" />
+              <text dy="47" textAnchor="middle">
+                {sel.p.name} · {sel.p.place.name}
               </text>
-            )}
-          </g>
-        ))}
-        {sel && (
-          <g className="med" transform={`translate(${sel.x},${sel.y})`}>
-            <circle className="med-bg" r="30" />
-            <image
-              clipPath="url(#medclip)"
-              href={sel.p.portrait}
-              x="-27"
-              y="-34"
-              width="54"
-            />
-            <circle className="med-ring" r="26" />
-            <text dy="47" textAnchor="middle">
-              {sel.p.name} · {sel.p.place.name}
-            </text>
-          </g>
-        )}
-      </svg>
+            </g>
+          )}
+        </svg>
+        <div className="zoomctl">
+          <button onClick={() => setZoom(z => clampZoom(z * 1.5))} aria-label="Zoom in">+</button>
+          <button onClick={() => setZoom(z => clampZoom(z / 1.5))} aria-label="Zoom out">−</button>
+          <button onClick={() => setZoom(1)} aria-label="Reset zoom">◦</button>
+        </div>
+      </div>
       <div className="scrub">
         <button className="playbtn" onClick={togglePlay} aria-label={playing ? 'Pause' : 'Play'}>
           {playing ? '❚❚' : '▶'}
@@ -203,17 +264,22 @@ export default function Globe({ selectedId, onSelect }) {
           type="range"
           min={YEAR_MIN}
           max={YEAR_MAX}
-          value={Math.round(year)}
+          value={lensOn ? Math.round(year) : YEAR_MAX}
           onChange={onScrub}
           aria-label="Year"
         />
         <div className="yearread">
-          <div className="yr">{fmtYear(year)}</div>
-          <div className="eraname">{era.name}</div>
+          <div className="yr">{lensOn ? fmtYear(year) : 'All time'}</div>
+          <div className="eraname">{lensOn ? era.name : 'every era at once'}</div>
         </div>
+        {lensOn && (
+          <button className="lenschip" onClick={allTime}>
+            all time ✕
+          </button>
+        )}
       </div>
       <div className="globehint">
-        drag to turn the globe · scrub or play through time · click a point to open its entry
+        drag to turn · scroll to zoom · scrub to light an era · click a thinker to open their entry
       </div>
     </div>
   )
