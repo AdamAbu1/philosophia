@@ -24,27 +24,8 @@ header .sub { font-style: italic; color: var(--faded); font-size: 13.5px; margin
 /* ---- globe ---- */
 .globe-wrap { max-width: 940px; margin: 0 auto; padding: 0 12px; }
 .globe-box { position: relative; }
-svg.globe { display: block; width: 100%; height: auto; touch-action: none; cursor: grab; }
-svg.globe:active { cursor: grabbing; }
-.sphere { fill: url(#ocean); stroke: var(--ink); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
-.grat { fill: none; stroke: #8a7c62; stroke-width: .35; stroke-dasharray: 1, 2.5; opacity: .7; vector-effect: non-scaling-stroke; }
-.landp { fill: url(#landfill); stroke: #3a332a; stroke-width: .7; vector-effect: non-scaling-stroke; }
-.pt { cursor: pointer; }
-.pt circle { stroke: var(--ink); }
-.pt.all circle { fill: var(--ink); stroke-width: 1.2; opacity: .82; }
-.pt.lit circle { fill: var(--ink); stroke-width: 1.4; opacity: .95; }
-.pt.faded circle { fill: none; stroke-width: 1; opacity: .38; }
-.pt text {
-  font-size: 10px; fill: var(--ink); pointer-events: none;
-  paint-order: stroke; stroke: var(--paper); stroke-width: 2.5px; stroke-linejoin: round;
-}
-.mini-bg { fill: var(--paper); stroke: var(--ink); stroke-width: 1; opacity: .95; }
-.mini-ring { fill: none; stroke: var(--ink); stroke-width: .6; }
-.pt.faded .mini-bg, .pt.faded image, .pt.faded .mini-ring { opacity: .35; }
-.mini-name {
-  font-size: 9px; fill: var(--ink); pointer-events: none;
-  paint-order: stroke; stroke: var(--paper); stroke-width: 2.5px; stroke-linejoin: round;
-}
+canvas.globe { display: block; touch-action: none; cursor: grab; }
+canvas.globe:active { cursor: grabbing; }
 .zoomctl { position: absolute; right: 14px; top: 14px; display: flex; flex-direction: column; gap: 6px; }
 .zoomctl button {
   width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--ink-soft);

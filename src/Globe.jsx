@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { geoOrthographic, geoPath, geoGraticule10 } from 'd3-geo'
+import { useEffect, useRef, useState } from 'react'
+import { geoOrthographic, geoPath } from 'd3-geo'
+import { geoGraticule10 } from 'd3-geo'
 import { feature } from 'topojson-client'
 import world from './assets/land-110m.json'
 import { ERAS, PHILOSOPHERS, byId } from './data.js'
@@ -10,124 +11,366 @@ import {
 const W = 900
 const H = 620
 const R = 280
+const CX = W / 2
+const CY = H / 2
 const LAND = feature(world, world.objects.land)
 const GRATICULE = geoGraticule10()
 const COORDS = displayCoords(PHILOSOPHERS)
-// alternate label side per thinker so dense clusters halve their collisions
 const LABEL_BELOW = Object.fromEntries(PHILOSOPHERS.map((p, i) => [p.id, i % 2 === 1]))
 const clampZoom = z => Math.max(1, Math.min(8, z))
 
+const INK = '#2b2620'
+const INK_LAND = '#3a332a'
+const PAPER = '#f3ecdb'
+const FADE = 'rgba(43,38,32,.38)'
+
+// Engraved fill tiles, built once: hatched ocean, stippled land.
+let oceanPattern = null
+let landPattern = null
+function buildPatterns(ctx) {
+  const tile = (w, h, drawFn) => {
+    const c = document.createElement('canvas')
+    c.width = w * 2
+    c.height = h * 2
+    const t = c.getContext('2d')
+    t.scale(2, 2)
+    drawFn(t)
+    const p = ctx.createPattern(c, 'repeat')
+    p.setTransform(new DOMMatrix().scale(0.5))
+    return p
+  }
+  oceanPattern = tile(4, 4, t => {
+    t.fillStyle = '#efe6d1'
+    t.fillRect(0, 0, 4, 4)
+    t.strokeStyle = 'rgba(138,124,98,.5)'
+    t.lineWidth = 0.45
+    t.beginPath()
+    t.moveTo(0, 2)
+    t.lineTo(4, 2)
+    t.stroke()
+  })
+  landPattern = tile(5, 5, t => {
+    t.fillStyle = '#e7dcc2'
+    t.fillRect(0, 0, 5, 5)
+    t.fillStyle = 'rgba(122,107,80,.55)'
+    t.beginPath()
+    t.arc(1.2, 1.4, 0.5, 0, 7)
+    t.fill()
+    t.fillStyle = 'rgba(122,107,80,.4)'
+    t.beginPath()
+    t.arc(3.6, 3.8, 0.5, 0, 7)
+    t.fill()
+  })
+}
+
+// Thumbnail images load lazily; a redraw fires as each arrives.
+const thumbCache = new Map()
+function thumbFor(p, onReady) {
+  let img = thumbCache.get(p.id)
+  if (!img) {
+    img = new Image()
+    img.src = p.thumb
+    img.onload = onReady
+    thumbCache.set(p.id, img)
+  }
+  return img.complete && img.naturalWidth > 0 ? img : null
+}
+
 export default function Globe({ selectedId, onSelect }) {
-  const [rotation, setRotation] = useState([-22, -40])
-  const [zoom, setZoom] = useState(1)
+  // Scrubber UI state (small React tree); the map itself renders imperatively.
   const [year, setYear] = useState(YEAR_MIN)
   const [lensOn, setLensOn] = useState(false)
   const [playing, setPlaying] = useState(false)
+
+  const canvasRef = useRef(null)
+  const rotationRef = useRef([-22, -40])
+  const zoomRef = useRef(1)
+  const yearRef = useRef(YEAR_MIN)
+  const lensRef = useRef(false)
+  const selectedRef = useRef(null)
   const spinRef = useRef(true)
   const dragRef = useRef(null)
   const movedRef = useRef(false)
   const targetRef = useRef(null)
   const wheelRef = useRef(0)
   const playRef = useRef(false)
-  const svgRef = useRef(null)
+  const hoverRef = useRef(null)
+  const hitsRef = useRef([])
+  const projectionRef = useRef(geoOrthographic().translate([CX, CY]).clipAngle(90))
+
+  yearRef.current = year
+  lensRef.current = lensOn
   playRef.current = playing
+  selectedRef.current = selectedId
 
-  // Selection (click or influence-chip jump): tween the globe to the target.
-  // Only when the time lens is active does selection need to move the year.
-  useEffect(() => {
-    if (!selectedId) return
-    const p = byId[selectedId]
-    spinRef.current = false
-    const [lon, lat] = COORDS[selectedId]
-    targetRef.current = [-lon, Math.max(-75, Math.min(75, -lat))]
-    if (lensOn) setYear(y => yearForSelection(p, y))
-  }, [selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
+  function draw() {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!oceanPattern) buildPatterns(ctx)
+    const dpr = window.devicePixelRatio || 1
+    if (canvas.width !== W * dpr) {
+      canvas.width = W * dpr
+      canvas.height = H * dpr
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    ctx.clearRect(0, 0, W, H)
 
-  // One animation loop: play sweep, rotation tween, idle spin, batched wheel zoom.
+    const zoom = zoomRef.current
+    const rotation = rotationRef.current
+    const projection = projectionRef.current.rotate(rotation).scale(R * zoom)
+    const path = geoPath(projection, ctx)
+
+    // sphere: hatched ocean + double rim
+    ctx.beginPath()
+    path({ type: 'Sphere' })
+    ctx.fillStyle = oceanPattern
+    ctx.fill()
+    ctx.strokeStyle = INK
+    ctx.lineWidth = 1.6
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.arc(CX, CY, R * zoom * 1.018, 0, 7)
+    ctx.lineWidth = 0.5
+    ctx.stroke()
+
+    // graticule
+    ctx.beginPath()
+    path(GRATICULE)
+    ctx.setLineDash([1, 2.5])
+    ctx.strokeStyle = 'rgba(138,124,98,.7)'
+    ctx.lineWidth = 0.35
+    ctx.stroke()
+    ctx.setLineDash([])
+
+    // land: stippled fill + ink coast
+    ctx.beginPath()
+    path(LAND)
+    ctx.fillStyle = landPattern
+    ctx.fill()
+    ctx.strokeStyle = INK_LAND
+    ctx.lineWidth = 0.7
+    ctx.stroke()
+
+    // points
+    const lens = lensRef.current
+    const yr = yearRef.current
+    const medallions = zoom >= 3
+    const hits = []
+    ctx.textAlign = 'center'
+    for (const p of PHILOSOPHERS) {
+      if (!isFrontside(COORDS[p.id], rotation)) continue
+      const [px, py] = projection(COORDS[p.id])
+      if (px < -60 || px > W + 60 || py < -60 || py > H + 60) continue
+      const lit = lens && yr >= p.born && yr <= p.died
+      hits.push({ id: p.id, x: px, y: py })
+      if (medallions) {
+        const dim = lens && !lit
+        ctx.globalAlpha = dim ? 0.35 : 1
+        ctx.beginPath()
+        ctx.arc(px, py, 13, 0, 7)
+        ctx.fillStyle = PAPER
+        ctx.fill()
+        ctx.strokeStyle = INK
+        ctx.lineWidth = 1
+        ctx.stroke()
+        const img = thumbFor(p, draw)
+        if (img) {
+          ctx.save()
+          ctx.beginPath()
+          ctx.arc(px, py, 11, 0, 7)
+          ctx.clip()
+          ctx.drawImage(img, px - 11.5, py - 14.5, 23, 30.7)
+          ctx.restore()
+        }
+        ctx.beginPath()
+        ctx.arc(px, py, 11, 0, 7)
+        ctx.lineWidth = 0.6
+        ctx.stroke()
+        if (zoom >= 4) label(ctx, p.name, px, py + 24, '9px Georgia, serif')
+        ctx.globalAlpha = 1
+      } else if (lens) {
+        ctx.beginPath()
+        ctx.arc(px, py, lit ? 5 : 2.8, 0, 7)
+        if (lit) {
+          ctx.fillStyle = INK
+          ctx.fill()
+          ctx.strokeStyle = INK
+          ctx.lineWidth = 1.4
+          ctx.stroke()
+          label(ctx, p.name, px, py + (LABEL_BELOW[p.id] ? 20 : -11), '10px Georgia, serif')
+        } else {
+          ctx.strokeStyle = FADE
+          ctx.lineWidth = 1
+          ctx.stroke()
+        }
+      } else {
+        ctx.beginPath()
+        ctx.arc(px, py, 4, 0, 7)
+        ctx.fillStyle = 'rgba(43,38,32,.82)'
+        ctx.fill()
+        ctx.strokeStyle = INK
+        ctx.lineWidth = 1.2
+        ctx.stroke()
+      }
+    }
+    hitsRef.current = hits
+
+    // hover name (any zoom level)
+    const hov = hoverRef.current
+    if (hov && hov !== selectedRef.current) {
+      const h = hits.find(d => d.id === hov)
+      if (h) label(ctx, byId[hov].name, h.x, h.y - (medallions ? 18 : 11), '10.5px Georgia, serif')
+    }
+
+    // selected medallion
+    const selId = selectedRef.current
+    if (selId) {
+      const h = hits.find(d => d.id === selId)
+      if (h) {
+        const p = byId[selId]
+        ctx.beginPath()
+        ctx.arc(h.x, h.y, 30, 0, 7)
+        ctx.fillStyle = PAPER
+        ctx.fill()
+        ctx.strokeStyle = INK
+        ctx.lineWidth = 1.6
+        ctx.stroke()
+        const img = thumbFor(p, draw)
+        if (img) {
+          ctx.save()
+          ctx.beginPath()
+          ctx.arc(h.x, h.y, 26, 0, 7)
+          ctx.clip()
+          ctx.drawImage(img, h.x - 27, h.y - 34, 54, 72)
+          ctx.restore()
+        }
+        ctx.beginPath()
+        ctx.arc(h.x, h.y, 26, 0, 7)
+        ctx.lineWidth = 0.8
+        ctx.stroke()
+        label(ctx, `${p.name} · ${p.place.name}`, h.x, h.y + 47, '11.5px Georgia, serif')
+      }
+    }
+  }
+
+  function label(ctx, text, x, y, font) {
+    ctx.font = font
+    ctx.lineJoin = 'round'
+    ctx.strokeStyle = PAPER
+    ctx.lineWidth = 3
+    ctx.strokeText(text, x, y)
+    ctx.fillStyle = INK
+    ctx.fillText(text, x, y)
+  }
+
+  // Animation loop drives ONLY motion (spin, play sweep, tween, batched wheel).
+  // Everything event-driven calls draw() directly, so the globe stays live
+  // even where requestAnimationFrame is throttled.
   useEffect(() => {
     let raf
     let last = performance.now()
     const tick = now => {
       const dt = Math.min(50, now - last)
       last = now
+      let dirty = false
       if (wheelRef.current !== 0) {
         const dz = wheelRef.current
         wheelRef.current = 0
-        setZoom(z => clampZoom(z * Math.exp(-dz * 0.003)))
+        zoomRef.current = clampZoom(zoomRef.current * Math.exp(-dz * 0.003))
+        dirty = true
       }
       if (playRef.current) {
-        setYear(y => {
-          const ny = y + dt * 0.11
-          if (ny >= YEAR_MAX) {
-            setPlaying(false)
-            return YEAR_MAX
-          }
-          return ny
-        })
+        const ny = yearRef.current + dt * 0.11
+        if (ny >= YEAR_MAX) {
+          setPlaying(false)
+          setYear(YEAR_MAX)
+        } else {
+          setYear(ny)
+        }
+        yearRef.current = Math.min(ny, YEAR_MAX)
+        dirty = true
       }
       if (targetRef.current) {
-        setRotation(([a, b]) => {
-          const [ta, tb] = targetRef.current
-          const da = ((ta - a + 540) % 360) - 180
-          const db = tb - b
-          if (Math.abs(da) < 0.4 && Math.abs(db) < 0.4) {
-            targetRef.current = null
-            return [ta, tb]
-          }
-          return [a + da * 0.12, b + db * 0.12]
-        })
+        const [a, b] = rotationRef.current
+        const [ta, tb] = targetRef.current
+        const da = ((ta - a + 540) % 360) - 180
+        const db = tb - b
+        if (Math.abs(da) < 0.4 && Math.abs(db) < 0.4) {
+          rotationRef.current = [ta, tb]
+          targetRef.current = null
+        } else {
+          rotationRef.current = [a + da * 0.12, b + db * 0.12]
+        }
+        dirty = true
       } else if (spinRef.current && !playRef.current) {
-        setRotation(([a, b]) => [a + dt * 0.0035, b])
+        rotationRef.current = [rotationRef.current[0] + dt * 0.0035, rotationRef.current[1]]
+        dirty = true
       }
+      if (dirty) draw()
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Wheel zoom needs a non-passive native listener (React's synthetic wheel is
-  // passive). Deltas accumulate in a ref and apply once per frame.
+  // Non-passive wheel listener; deltas batch, but draw immediately so zoom
+  // feels instant even without the frame loop.
   useEffect(() => {
-    const el = svgRef.current
+    const el = canvasRef.current
     if (!el) return
     const onWheel = e => {
       e.preventDefault()
       spinRef.current = false
-      wheelRef.current += e.deltaY
+      zoomRef.current = clampZoom(zoomRef.current * Math.exp(-e.deltaY * 0.003))
+      draw()
     }
     el.addEventListener('wheel', onWheel, { passive: false })
     return () => el.removeEventListener('wheel', onWheel)
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // The projection ignores zoom: map paths recompute only on ROTATION, and
-  // zooming is a pure group transform (GPU-cheap), so wheel zoom stays smooth.
-  const projection = useMemo(
-    () => geoOrthographic().translate([W / 2, H / 2]).scale(R).rotate(rotation).clipAngle(90),
-    [rotation],
-  )
-  const mapPaths = useMemo(() => {
-    const path = geoPath(projection)
-    return {
-      sphere: path({ type: 'Sphere' }),
-      grat: path(GRATICULE),
-      land: path(LAND),
+  // Selection: tween the globe toward the target; move time only if the lens is on.
+  useEffect(() => {
+    if (!selectedId) {
+      draw()
+      return
     }
-  }, [projection])
+    const p = byId[selectedId]
+    spinRef.current = false
+    const [lon, lat] = COORDS[selectedId]
+    targetRef.current = [-lon, Math.max(-75, Math.min(75, -lat))]
+    if (lensRef.current) {
+      const ny = yearForSelection(p, yearRef.current)
+      yearRef.current = ny
+      setYear(ny)
+    }
+    draw()
+  }, [selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Screen position = base projection scaled about the globe center.
-  const toScreen = ([x, y]) => [W / 2 + (x - W / 2) * zoom, H / 2 + (y - H / 2) * zoom]
+  // Redraw when scrubber-driven state changes; also covers first mount.
+  useEffect(() => {
+    draw()
+  }) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const points = PHILOSOPHERS.filter(p => isFrontside(COORDS[p.id], rotation)).map(p => {
-    const [x, y] = toScreen(projection(COORDS[p.id]))
-    return { p, x, y, lit: lensOn && year >= p.born && year <= p.died }
-  })
-  const sel = selectedId ? points.find(d => d.p.id === selectedId) : null
-  const era = eraFor(year, ERAS)
-  const medallions = zoom >= 3
+  function canvasPoint(e) {
+    const rect = canvasRef.current.getBoundingClientRect()
+    return [((e.clientX - rect.left) * W) / rect.width, ((e.clientY - rect.top) * H) / rect.height]
+  }
+  function hitTest(e) {
+    const [mx, my] = canvasPoint(e)
+    const r = zoomRef.current >= 3 ? 15 : 9
+    let best = null
+    let bestD = r * r
+    for (const h of hitsRef.current) {
+      const d = (h.x - mx) ** 2 + (h.y - my) ** 2
+      if (d < bestD) {
+        bestD = d
+        best = h.id
+      }
+    }
+    return best
+  }
 
-  // No pointer capture: capturing on pointerdown retargets pointerup to the
-  // svg and swallows point clicks. Instead, rotation starts only after a small
-  // movement threshold, and a real drag suppresses the following click.
   function onPointerDown(e) {
     spinRef.current = false
     targetRef.current = null
@@ -135,35 +378,50 @@ export default function Globe({ selectedId, onSelect }) {
   }
   function onPointerMove(e) {
     const d = dragRef.current
-    if (!d) return
-    const dx = e.clientX - d.x
-    const dy = e.clientY - d.y
-    if (!d.moved && Math.abs(dx) + Math.abs(dy) < 3) return
-    d.moved = true
-    d.x = e.clientX
-    d.y = e.clientY
-    setRotation(([a, b]) => [
-      a + (dx * 0.28) / zoom,
-      Math.max(-75, Math.min(75, b - (dy * 0.28) / zoom)),
-    ])
+    if (d) {
+      const dx = e.clientX - d.x
+      const dy = e.clientY - d.y
+      if (!d.moved && Math.abs(dx) + Math.abs(dy) < 3) return
+      d.moved = true
+      d.x = e.clientX
+      d.y = e.clientY
+      const [a, b] = rotationRef.current
+      rotationRef.current = [
+        a + (dx * 0.28) / zoomRef.current,
+        Math.max(-75, Math.min(75, b - (dy * 0.28) / zoomRef.current)),
+      ]
+      draw()
+      return
+    }
+    const hov = hitTest(e)
+    if (hov !== hoverRef.current) {
+      hoverRef.current = hov
+      canvasRef.current.style.cursor = hov ? 'pointer' : 'grab'
+      draw()
+    }
   }
   function onPointerUp() {
     if (dragRef.current) movedRef.current = dragRef.current.moved
     dragRef.current = null
   }
-  function pointClick(id) {
+  function onClick(e) {
     if (movedRef.current) {
       movedRef.current = false
       return
     }
-    onSelect(id)
+    const hit = hitTest(e)
+    if (hit) onSelect(hit)
   }
 
   function togglePlay() {
     spinRef.current = false
     if (!playing) {
       setLensOn(true)
-      if (!lensOn || year >= YEAR_MAX) setYear(YEAR_MIN)
+      lensRef.current = true
+      if (!lensOn || year >= YEAR_MAX) {
+        setYear(YEAR_MIN)
+        yearRef.current = YEAR_MIN
+      }
     }
     setPlaying(!playing)
   }
@@ -171,111 +429,53 @@ export default function Globe({ selectedId, onSelect }) {
     spinRef.current = false
     setPlaying(false)
     setLensOn(true)
-    setYear(+e.target.value)
+    lensRef.current = true
+    const v = +e.target.value
+    setYear(v)
+    yearRef.current = v
+    draw()
   }
   function allTime() {
     setLensOn(false)
+    lensRef.current = false
     setPlaying(false)
+    draw()
   }
+  function zoomBy(f) {
+    spinRef.current = false
+    zoomRef.current = clampZoom(zoomRef.current * f)
+    draw()
+  }
+
+  const era = eraFor(year, ERAS)
 
   return (
     <div className="globe-wrap">
       <div className="globe-box">
-        <svg
-          ref={svgRef}
-          viewBox={`0 0 ${W} ${H}`}
+        <canvas
+          ref={canvasRef}
           className="globe"
+          style={{ width: '100%', aspectRatio: `${W} / ${H}` }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerLeave={onPointerUp}
-          onDoubleClick={() => setZoom(z => clampZoom(z * 2))}
-        >
-          <defs>
-            <pattern
-              id="ocean" width="4" height="4" patternUnits="userSpaceOnUse"
-              patternTransform={`scale(${1 / zoom})`}
-            >
-              <rect width="4" height="4" fill="#efe6d1" />
-              <line x2="4" y1="2" y2="2" stroke="#8a7c62" strokeWidth=".45" opacity=".5" />
-            </pattern>
-            <pattern
-              id="landfill" width="5" height="5" patternUnits="userSpaceOnUse"
-              patternTransform={`scale(${1 / zoom})`}
-            >
-              <rect width="5" height="5" fill="#e7dcc2" />
-              <circle cx="1.2" cy="1.4" r=".5" fill="#7a6b50" opacity=".55" />
-              <circle cx="3.6" cy="3.8" r=".5" fill="#7a6b50" opacity=".4" />
-            </pattern>
-            <clipPath id="medclip">
-              <circle r="26" />
-            </clipPath>
-            <clipPath id="miniclip">
-              <circle r="11" />
-            </clipPath>
-          </defs>
-          <g transform={`translate(${W / 2},${H / 2}) scale(${zoom}) translate(${-W / 2},${-H / 2})`}>
-            <path className="sphere" d={mapPaths.sphere} />
-            <path className="grat" d={mapPaths.grat} />
-            <path className="landp" d={mapPaths.land} />
-          </g>
-          {points.map(d => {
-            const onScreen = d.x > -60 && d.x < W + 60 && d.y > -60 && d.y < H + 60
-            if (!onScreen) return null
-            const cls = lensOn ? (d.lit ? ' lit' : ' faded') : ' all'
-            return (
-              <g
-                key={d.p.id}
-                className={`pt${cls}`}
-                transform={`translate(${d.x},${d.y})`}
-                onClick={() => pointClick(d.p.id)}
-              >
-                <title>{`${d.p.name} · ${d.p.place.name} · ${fmtYear(d.p.born)}–${fmtYear(d.p.died)}`}</title>
-                {medallions ? (
-                  <>
-                    <circle className="mini-bg" r="13" />
-                    <image
-                      clipPath="url(#miniclip)"
-                      href={d.p.thumb}
-                      x="-11.5"
-                      y="-14.5"
-                      width="23"
-                    />
-                    <circle className="mini-ring" r="11" />
-                    {zoom >= 4 && (
-                      <text className="mini-name" dy="24" textAnchor="middle">
-                        {d.p.name}
-                      </text>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <circle r={lensOn ? (d.lit ? 5 : 2.8) : 4} />
-                    {lensOn && d.lit && (
-                      <text dy={LABEL_BELOW[d.p.id] ? 20 : -11} textAnchor="middle">
-                        {d.p.name}
-                      </text>
-                    )}
-                  </>
-                )}
-              </g>
-            )
-          })}
-          {sel && (
-            <g className="med" transform={`translate(${sel.x},${sel.y})`}>
-              <circle className="med-bg" r="30" />
-              <image clipPath="url(#medclip)" href={sel.p.thumb} x="-27" y="-34" width="54" />
-              <circle className="med-ring" r="26" />
-              <text dy="47" textAnchor="middle">
-                {sel.p.name} · {sel.p.place.name}
-              </text>
-            </g>
-          )}
-        </svg>
+          onClick={onClick}
+          onDoubleClick={() => zoomBy(2)}
+        />
         <div className="zoomctl">
-          <button onClick={() => setZoom(z => clampZoom(z * 1.5))} aria-label="Zoom in">+</button>
-          <button onClick={() => setZoom(z => clampZoom(z / 1.5))} aria-label="Zoom out">−</button>
-          <button onClick={() => setZoom(1)} aria-label="Reset zoom">◦</button>
+          <button onClick={() => zoomBy(1.5)} aria-label="Zoom in">+</button>
+          <button onClick={() => zoomBy(1 / 1.5)} aria-label="Zoom out">−</button>
+          <button
+            onClick={() => {
+              spinRef.current = false
+              zoomRef.current = 1
+              draw()
+            }}
+            aria-label="Reset zoom"
+          >
+            ◦
+          </button>
         </div>
       </div>
       <div className="scrub">
