@@ -111,13 +111,19 @@ canvas.globe:active { cursor: grabbing; }
   font-size: 14px; font-style: italic; color: var(--ink-soft);
   border-left: 2px solid var(--rule); padding-left: 10px;
 }
-.infgroup { margin-top: 4px; }
-.inf { display: flex; flex-wrap: wrap; gap: 6px; }
-.inf button {
-  font-size: 11px; padding: 4px 11px; border: 1px solid var(--ink-soft); border-radius: 999px;
-  background: transparent; cursor: pointer; color: var(--ink-soft); font-family: inherit;
+.reading { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.reading a {
+  font-size: 11.5px; padding: 4px 12px; border: 1px solid var(--ink-soft); border-radius: 999px;
+  color: var(--ink-soft); text-decoration: none;
 }
-.inf button:hover { background: rgba(74, 66, 55, .1); }
+.reading a:hover { background: rgba(74, 66, 55, .1); }
+.edge { font-size: 13.5px; line-height: 1.65; color: var(--ink-soft); margin-bottom: 8px; }
+.edgechip {
+  font-size: 11px; padding: 3px 10px; margin-right: 4px; border: 1px solid var(--ink-soft);
+  border-radius: 999px; background: transparent; cursor: pointer; color: var(--ink-soft);
+  font-family: inherit; vertical-align: 1px;
+}
+.edgechip:hover { background: rgba(74, 66, 55, .1); }
 .detail-main { flex: 1; min-width: 0; max-width: 620px; }
 .detail-main .lead { font-size: 16.5px; line-height: 1.6; color: var(--ink); }
 .detail-main .body { font-size: 14px; line-height: 1.7; color: var(--ink-soft); }
@@ -125,6 +131,10 @@ canvas.globe:active { cursor: grabbing; }
 .detail-main .idea b { color: var(--ink); }
 .detail-main .works { margin: 0 0 4px 18px; }
 .detail-main .works li { font-size: 13.5px; line-height: 1.75; color: var(--ink-soft); }
+.detail-main .works a {
+  color: var(--ink-soft); text-decoration: underline dotted; text-underline-offset: 3px;
+}
+.detail-main .works a:hover { color: var(--ink); }
 .lifeline { display: block; width: 100%; height: auto; margin-top: 2px; }
 .ll-band { fill: #7a6b50; opacity: .06; }
 .ll-band.odd { opacity: .12; }

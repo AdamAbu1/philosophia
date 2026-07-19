@@ -322,7 +322,10 @@ export default function Globe({ selectedId, onSelect }) {
     const onWheel = e => {
       e.preventDefault()
       spinRef.current = false
-      zoomRef.current = clampZoom(zoomRef.current * Math.exp(-e.deltaY * 0.003))
+      // Trackpad pinch arrives as ctrlKey wheel events with ~10x smaller
+      // deltas than mouse notches — scale accordingly (d3-zoom's heuristic).
+      const k = e.ctrlKey ? 0.0434 : 0.00434
+      zoomRef.current = clampZoom(zoomRef.current * Math.pow(2, -e.deltaY * k))
       draw()
     }
     el.addEventListener('wheel', onWheel, { passive: false })

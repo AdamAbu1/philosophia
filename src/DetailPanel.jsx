@@ -1,20 +1,24 @@
 import { byId, eraById } from './data.js'
+import { EDGES } from './edges.js'
 import { fmtRange } from './format.js'
 import Lifeline from './Lifeline.jsx'
 
-function ChipRow({ label, ids, onJump }) {
-  if (!ids.length) return null
+const UNLINKABLE = /^(No |Wrote |Nothing |~)/
+
+function EdgeList({ label, entries, onJump }) {
+  if (!entries.length) return null
   return (
-    <div className="infgroup">
+    <>
       <h4>{label}</h4>
-      <div className="inf">
-        {ids.map(id => (
-          <button key={id} onClick={() => onJump(id)}>
+      {entries.map(({ id, text }) => (
+        <p className="edge" key={id}>
+          <button className="edgechip" onClick={() => onJump(id)}>
             {byId[id].name}
-          </button>
-        ))}
-      </div>
-    </div>
+          </button>{' '}
+          {text}
+        </p>
+      ))}
+    </>
   )
 }
 
@@ -27,6 +31,12 @@ export default function DetailPanel({ philosopher: p, onClose, onJump }) {
     )
   }
   const era = eraById[p.era]
+  const workLookup = w =>
+    `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(
+      `${w.replace(/\s*\(.*\)$/, '')} ${p.name}`,
+    )}`
+  const influencedBy = p.influences.map(id => ({ id, text: EDGES[`${id}>${p.id}`] }))
+  const wentOn = p.influenced.map(id => ({ id, text: EDGES[`${p.id}>${id}`] }))
   return (
     <section className="detail" aria-label={`Entry for ${p.name}`}>
       <button className="close" onClick={onClose} aria-label="Close entry">
@@ -43,8 +53,14 @@ export default function DetailPanel({ philosopher: p, onClose, onJump }) {
           {p.school !== '—' && <span className="c">{p.school}</span>}
         </div>
         <p className="oneline">“{p.line}”</p>
-        <ChipRow label="INFLUENCED BY" ids={p.influences} onJump={onJump} />
-        <ChipRow label="WENT ON TO INFLUENCE" ids={p.influenced} onJump={onJump} />
+        <h4>FURTHER READING</h4>
+        <div className="reading">
+          {p.links.map(l => (
+            <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer">
+              {l.label}
+            </a>
+          ))}
+        </div>
       </div>
       <div className="detail-main">
         <p className="lead">{p.blurb}</p>
@@ -59,11 +75,21 @@ export default function DetailPanel({ philosopher: p, onClose, onJump }) {
         <h4>MAJOR WORKS</h4>
         <ul className="works">
           {p.works.map(w => (
-            <li key={w}>{w}</li>
+            <li key={w}>
+              {UNLINKABLE.test(w) ? (
+                w
+              ) : (
+                <a href={workLookup(w)} target="_blank" rel="noopener noreferrer">
+                  {w}
+                </a>
+              )}
+            </li>
           ))}
         </ul>
         <h4>LEGACY</h4>
         <p className="body">{p.legacy}</p>
+        <EdgeList label="INFLUENCED BY" entries={influencedBy} onJump={onJump} />
+        <EdgeList label="WENT ON TO INFLUENCE" entries={wentOn} onJump={onJump} />
         <h4>IN TIME</h4>
         <Lifeline philosopher={p} onJump={onJump} />
       </div>

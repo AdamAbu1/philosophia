@@ -3,6 +3,36 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { ERAS, PHILOSOPHERS, byId, eraById } from '../src/data.js'
 import { DETAILS } from '../src/details.js'
+import { EDGES } from '../src/edges.js'
+
+describe('influence edges and reading links', () => {
+  it('every influence pair has an edge annotation', () => {
+    for (const p of PHILOSOPHERS) {
+      for (const inf of p.influences) {
+        expect(EDGES[`${inf}>${p.id}`]?.length, `${inf}>${p.id}`).toBeGreaterThan(20)
+      }
+    }
+  })
+
+  it('no orphan edge annotations', () => {
+    const valid = new Set(
+      PHILOSOPHERS.flatMap(p => p.influences.map(inf => `${inf}>${p.id}`)),
+    )
+    for (const key of Object.keys(EDGES)) {
+      expect(valid.has(key), key).toBe(true)
+    }
+  })
+
+  it('every philosopher has well-formed further-reading links', () => {
+    for (const p of PHILOSOPHERS) {
+      expect(p.links.length, p.id).toBeGreaterThanOrEqual(2)
+      for (const l of p.links) {
+        expect(l.label).toBeTruthy()
+        expect(l.url, p.id).toMatch(/^https:\/\//)
+      }
+    }
+  })
+})
 
 describe('detail content', () => {
   it('DETAILS keys exactly match philosopher ids', () => {

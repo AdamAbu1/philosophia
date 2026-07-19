@@ -228,6 +228,59 @@ const PLACES = {
   foucault: { name: 'Poitiers', lat: 46.58, lon: 0.34 },
 }
 
+// Further-reading targets: Stanford Encyclopedia entry slug, Wikipedia title,
+// and whether meaningful public-domain texts exist on Project Gutenberg.
+const LINKS = {
+  thales: { sep: 'presocratics', wiki: 'Thales', pd: true },
+  anaximander: { sep: 'presocratics', wiki: 'Anaximander', pd: true },
+  pythagoras: { sep: 'pythagoras', wiki: 'Pythagoras', pd: true },
+  heraclitus: { sep: 'heraclitus', wiki: 'Heraclitus', pd: true },
+  parmenides: { sep: 'parmenides', wiki: 'Parmenides', pd: true },
+  socrates: { sep: 'socrates', wiki: 'Socrates', pd: true },
+  democritus: { sep: 'democritus', wiki: 'Democritus', pd: true },
+  plato: { sep: 'plato', wiki: 'Plato', pd: true },
+  diogenes: { sep: 'diogenes-sinope', wiki: 'Diogenes', pd: true },
+  aristotle: { sep: 'aristotle', wiki: 'Aristotle', pd: true },
+  pyrrho: { sep: 'pyrrho', wiki: 'Pyrrho', pd: true },
+  epicurus: { sep: 'epicurus', wiki: 'Epicurus', pd: true },
+  zeno: { sep: 'stoicism', wiki: 'Zeno_of_Citium', pd: true },
+  marcus: { sep: 'marcus-aurelius', wiki: 'Marcus_Aurelius', pd: true },
+  plotinus: { sep: 'plotinus', wiki: 'Plotinus', pd: true },
+  augustine: { sep: 'augustine', wiki: 'Augustine_of_Hippo', pd: true },
+  anselm: { sep: 'anselm', wiki: 'Anselm_of_Canterbury', pd: true },
+  aquinas: { sep: 'aquinas', wiki: 'Thomas_Aquinas', pd: true },
+  ockham: { sep: 'ockham', wiki: 'William_of_Ockham', pd: true },
+  machiavelli: { sep: 'machiavelli', wiki: 'Niccolo_Machiavelli', pd: true },
+  bacon: { sep: 'francis-bacon', wiki: 'Francis_Bacon', pd: true },
+  hobbes: { sep: 'hobbes', wiki: 'Thomas_Hobbes', pd: true },
+  descartes: { sep: 'descartes', wiki: 'Rene_Descartes', pd: true },
+  spinoza: { sep: 'spinoza', wiki: 'Baruch_Spinoza', pd: true },
+  locke: { sep: 'locke', wiki: 'John_Locke', pd: true },
+  leibniz: { sep: 'leibniz', wiki: 'Gottfried_Wilhelm_Leibniz', pd: true },
+  berkeley: { sep: 'berkeley', wiki: 'George_Berkeley', pd: true },
+  hume: { sep: 'hume', wiki: 'David_Hume', pd: true },
+  rousseau: { sep: 'rousseau', wiki: 'Jean-Jacques_Rousseau', pd: true },
+  kant: { sep: 'kant', wiki: 'Immanuel_Kant', pd: true },
+  bentham: { sep: 'bentham', wiki: 'Jeremy_Bentham', pd: true },
+  wollstonecraft: { sep: 'wollstonecraft', wiki: 'Mary_Wollstonecraft', pd: true },
+  hegel: { sep: 'hegel', wiki: 'Georg_Wilhelm_Friedrich_Hegel', pd: true },
+  schopenhauer: { sep: 'schopenhauer', wiki: 'Arthur_Schopenhauer', pd: true },
+  mill: { sep: 'mill', wiki: 'John_Stuart_Mill', pd: true },
+  kierkegaard: { sep: 'kierkegaard', wiki: 'Soren_Kierkegaard', pd: true },
+  marx: { sep: 'marx', wiki: 'Karl_Marx', pd: true },
+  james: { sep: 'james', wiki: 'William_James', pd: true },
+  nietzsche: { sep: 'nietzsche', wiki: 'Friedrich_Nietzsche', pd: true },
+  russell: { sep: 'russell', wiki: 'Bertrand_Russell', pd: true },
+  wittgenstein: { sep: 'wittgenstein', wiki: 'Ludwig_Wittgenstein', pd: true },
+  heidegger: { sep: 'heidegger', wiki: 'Martin_Heidegger', pd: false },
+  sartre: { sep: 'sartre', wiki: 'Jean-Paul_Sartre', pd: false },
+  arendt: { sep: 'arendt', wiki: 'Hannah_Arendt', pd: false },
+  beauvoir: { sep: 'beauvoir', wiki: 'Simone_de_Beauvoir', pd: false },
+  camus: { sep: 'camus', wiki: 'Albert_Camus', pd: false },
+  rawls: { sep: 'rawls', wiki: 'John_Rawls', pd: false },
+  foucault: { sep: 'foucault', wiki: 'Michel_Foucault', pd: false },
+}
+
 export const PHILOSOPHERS = WESTERN.map(p => ({
   ...p,
   ...DETAILS[p.id],
@@ -236,6 +289,16 @@ export const PHILOSOPHERS = WESTERN.map(p => ({
   thumb: `portraits/thumbs/${p.id}.png`,
   place: PLACES[p.id],
   influenced: WESTERN.filter(q => q.influences.includes(p.id)).map(q => q.id),
+  links: [
+    { label: 'Stanford Encyclopedia', url: `https://plato.stanford.edu/entries/${LINKS[p.id].sep}/` },
+    { label: 'Wikipedia', url: `https://en.wikipedia.org/wiki/${LINKS[p.id].wiki}` },
+    ...(LINKS[p.id].pd
+      ? [{
+          label: 'Texts on Gutenberg',
+          url: `https://www.gutenberg.org/ebooks/search/?query=${encodeURIComponent(LINKS[p.id].wiki.replaceAll('_', ' '))}`,
+        }]
+      : []),
+  ],
 }))
 
 export const byId = Object.fromEntries(PHILOSOPHERS.map(p => [p.id, p]))
