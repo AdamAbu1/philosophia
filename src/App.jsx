@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import Timeline from './Timeline.jsx'
-import Drawer from './Drawer.jsx'
+import DetailPanel from './DetailPanel.jsx'
 import { byId } from './data.js'
 
 export default function App() {
@@ -31,7 +31,7 @@ export default function App() {
         </h1>
       </header>
       <Timeline selectedId={selectedId} onSelect={setSelectedId} />
-      <Drawer
+      <DetailPanel
         philosopher={selectedId ? byId[selectedId] : null}
         onClose={() => setSelectedId(null)}
         onJump={jumpTo}

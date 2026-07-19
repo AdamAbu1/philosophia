@@ -1,3 +1,5 @@
+import { DETAILS } from './details.js'
+
 // Eras define the piecewise time axis: each gets a fixed pixel width so dense
 // ancient stretches aren't crushed by a linear scale. `squeeze` labels heavy compression.
 export const ERAS = [
@@ -177,8 +179,10 @@ const WESTERN = [
 
 export const PHILOSOPHERS = WESTERN.map(p => ({
   ...p,
+  ...DETAILS[p.id],
   tradition: 'western',
   portrait: `portraits/${p.id}.png`,
+  influenced: WESTERN.filter(q => q.influences.includes(p.id)).map(q => q.id),
 }))
 
 export const byId = Object.fromEntries(PHILOSOPHERS.map(p => [p.id, p]))

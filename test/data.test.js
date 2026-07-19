@@ -2,6 +2,37 @@ import { describe, it, expect } from 'vitest'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { ERAS, PHILOSOPHERS, byId, eraById } from '../src/data.js'
+import { DETAILS } from '../src/details.js'
+
+describe('detail content', () => {
+  it('DETAILS keys exactly match philosopher ids', () => {
+    expect(new Set(Object.keys(DETAILS))).toEqual(new Set(PHILOSOPHERS.map(p => p.id)))
+  })
+
+  it('every philosopher has full detail content', () => {
+    for (const p of PHILOSOPHERS) {
+      expect(p.bio?.length, `${p.id} bio`).toBeGreaterThan(80)
+      expect(p.ideas?.length, `${p.id} ideas`).toBeGreaterThanOrEqual(2)
+      for (const i of p.ideas) {
+        expect(i.title, p.id).toBeTruthy()
+        expect(i.text?.length, `${p.id} idea text`).toBeGreaterThan(40)
+      }
+      expect(p.works?.length, `${p.id} works`).toBeGreaterThanOrEqual(1)
+      expect(p.legacy?.length, `${p.id} legacy`).toBeGreaterThan(40)
+    }
+  })
+
+  it('influenced is the exact inverse of influences', () => {
+    for (const p of PHILOSOPHERS) {
+      for (const inf of p.influences) {
+        expect(byId[inf].influenced, `${inf} should list ${p.id}`).toContain(p.id)
+      }
+      for (const heir of p.influenced) {
+        expect(byId[heir].influences, `${heir} should cite ${p.id}`).toContain(p.id)
+      }
+    }
+  })
+})
 
 describe('philosopher data schema', () => {
   it('has unique ids', () => {

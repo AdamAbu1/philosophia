@@ -11,9 +11,10 @@ philosophy (48 thinkers), era bands, detail drawer with influence-chip jumps.
   extension points for Chinese / Indian / Islamic tracks (v2). Western-only until then.
 
 ## Structure
-- `src/data.js` — eras (piecewise axis: per-era pixel width) + all philosopher content
+- `src/data.js` — eras (piecewise axis: per-era pixel width) + core philosopher records; merges `details.js` and computes reverse `influenced` links
+- `src/details.js` — long-form content per thinker: bio, titled key ideas, major works, legacy (schema test-enforced)
 - `src/layout.js` — pure positioning (clamp, 14px min gap, 4-lane cycling); tested
-- `src/Timeline.jsx` / `src/Drawer.jsx` / `src/App.jsx` — UI
+- `src/Timeline.jsx` / `src/DetailPanel.jsx` / `src/App.jsx` — UI; the detail entry renders inline BELOW the strip (owner rejected the pop-out drawer — keep it inline)
 - `public/portraits/<id>.png` — engraved portraits, one per philosopher (test-enforced)
 
 ## Commands
