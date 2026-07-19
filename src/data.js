@@ -243,7 +243,7 @@ const LINKS = {
   aristotle: { sep: 'aristotle', wiki: 'Aristotle', pd: true },
   pyrrho: { sep: 'pyrrho', wiki: 'Pyrrho', pd: true },
   epicurus: { sep: 'epicurus', wiki: 'Epicurus', pd: true },
-  zeno: { sep: 'stoicism', wiki: 'Zeno_of_Citium', pd: true },
+  zeno: { sep: 'zeno-citium', wiki: 'Zeno_of_Citium', pd: true },
   marcus: { sep: 'marcus-aurelius', wiki: 'Marcus_Aurelius', pd: true },
   plotinus: { sep: 'plotinus', wiki: 'Plotinus', pd: true },
   augustine: { sep: 'augustine', wiki: 'Augustine_of_Hippo', pd: true },
