@@ -152,6 +152,26 @@ export default function Globe({ selectedId, onSelect }) {
     ctx.lineWidth = 0.7
     ctx.stroke()
 
+    // influence arcs for the selected thinker: great circles, horizon-clipped.
+    // Dashed = drew from; solid = went on to influence.
+    const selPhil = selectedRef.current ? byId[selectedRef.current] : null
+    const connected = new Set()
+    if (selPhil) {
+      const from = COORDS[selPhil.id]
+      const arc = (otherId, dashed) => {
+        connected.add(otherId)
+        ctx.beginPath()
+        path({ type: 'LineString', coordinates: [from, COORDS[otherId]] })
+        ctx.setLineDash(dashed ? [4, 3] : [])
+        ctx.strokeStyle = dashed ? 'rgba(43,38,32,.5)' : 'rgba(43,38,32,.68)'
+        ctx.lineWidth = dashed ? 1 : 1.2
+        ctx.stroke()
+      }
+      for (const id of selPhil.influences) arc(id, true)
+      for (const id of selPhil.influenced) arc(id, false)
+      ctx.setLineDash([])
+    }
+
     // points
     const lens = lensRef.current
     const yr = yearRef.current
@@ -164,6 +184,15 @@ export default function Globe({ selectedId, onSelect }) {
       if (px < -60 || px > W + 60 || py < -60 || py > H + 60) continue
       const lit = lens && yr >= p.born && yr <= (p.died ?? YEAR_MAX)
       hits.push({ id: p.id, x: px, y: py })
+      if (connected.has(p.id)) {
+        ctx.beginPath()
+        ctx.arc(px, py, medallions ? 17 : 8.5, 0, 7)
+        ctx.setLineDash([2, 2.5])
+        ctx.strokeStyle = 'rgba(43,38,32,.55)'
+        ctx.lineWidth = 1
+        ctx.stroke()
+        ctx.setLineDash([])
+      }
       if (medallions) {
         const dim = lens && !lit
         ctx.globalAlpha = dim ? 0.35 : 1
@@ -504,7 +533,9 @@ export default function Globe({ selectedId, onSelect }) {
         )}
       </div>
       <div className="globehint">
-        drag to turn · scroll to zoom · scrub to light an era · click a thinker to open their entry
+        {selectedId
+          ? 'dashed arcs — who shaped them · solid arcs — whom they went on to shape · esc to clear'
+          : 'drag to turn · scroll to zoom · scrub to light an era · click a thinker to open their entry'}
       </div>
     </div>
   )
