@@ -233,6 +233,7 @@ export const PHILOSOPHERS = WESTERN.map(p => ({
   ...DETAILS[p.id],
   tradition: 'western',
   portrait: `portraits/${p.id}.png`,
+  thumb: `portraits/thumbs/${p.id}.png`,
   place: PLACES[p.id],
   influenced: WESTERN.filter(q => q.influences.includes(p.id)).map(q => q.id),
 }))

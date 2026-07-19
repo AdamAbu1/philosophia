@@ -55,9 +55,10 @@ describe('philosopher data schema', () => {
     }
   })
 
-  it('every portrait file exists on disk', () => {
+  it('every portrait and thumbnail file exists on disk', () => {
     for (const p of PHILOSOPHERS) {
       expect(existsSync(join(process.cwd(), 'public', p.portrait)), p.id).toBe(true)
+      expect(existsSync(join(process.cwd(), 'public', p.thumb)), `${p.id} thumb`).toBe(true)
     }
   })
 

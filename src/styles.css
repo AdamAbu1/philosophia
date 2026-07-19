@@ -26,9 +26,9 @@ header .sub { font-style: italic; color: var(--faded); font-size: 13.5px; margin
 .globe-box { position: relative; }
 svg.globe { display: block; width: 100%; height: auto; touch-action: none; cursor: grab; }
 svg.globe:active { cursor: grabbing; }
-.sphere { fill: url(#ocean); stroke: var(--ink); stroke-width: 1.6; }
-.grat { fill: none; stroke: #8a7c62; stroke-width: .35; stroke-dasharray: 1, 2.5; opacity: .7; }
-.landp { fill: url(#landfill); stroke: #3a332a; stroke-width: .7; }
+.sphere { fill: url(#ocean); stroke: var(--ink); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.grat { fill: none; stroke: #8a7c62; stroke-width: .35; stroke-dasharray: 1, 2.5; opacity: .7; vector-effect: non-scaling-stroke; }
+.landp { fill: url(#landfill); stroke: #3a332a; stroke-width: .7; vector-effect: non-scaling-stroke; }
 .pt { cursor: pointer; }
 .pt circle { stroke: var(--ink); }
 .pt.all circle { fill: var(--ink); stroke-width: 1.2; opacity: .82; }

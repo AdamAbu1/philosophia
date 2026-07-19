@@ -27,6 +27,7 @@ export default function Globe({ selectedId, onSelect }) {
   const dragRef = useRef(null)
   const movedRef = useRef(false)
   const targetRef = useRef(null)
+  const wheelRef = useRef(0)
   const playRef = useRef(false)
   const svgRef = useRef(null)
   playRef.current = playing
@@ -42,13 +43,18 @@ export default function Globe({ selectedId, onSelect }) {
     if (lensOn) setYear(y => yearForSelection(p, y))
   }, [selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // One animation loop: play sweep, rotation tween, idle spin.
+  // One animation loop: play sweep, rotation tween, idle spin, batched wheel zoom.
   useEffect(() => {
     let raf
     let last = performance.now()
     const tick = now => {
       const dt = Math.min(50, now - last)
       last = now
+      if (wheelRef.current !== 0) {
+        const dz = wheelRef.current
+        wheelRef.current = 0
+        setZoom(z => clampZoom(z * Math.exp(-dz * 0.003)))
+      }
       if (playRef.current) {
         setYear(y => {
           const ny = y + dt * 0.11
@@ -79,32 +85,40 @@ export default function Globe({ selectedId, onSelect }) {
     return () => cancelAnimationFrame(raf)
   }, [])
 
-  // Wheel zoom needs a non-passive native listener (React's synthetic wheel is passive).
+  // Wheel zoom needs a non-passive native listener (React's synthetic wheel is
+  // passive). Deltas accumulate in a ref and apply once per frame.
   useEffect(() => {
     const el = svgRef.current
     if (!el) return
     const onWheel = e => {
       e.preventDefault()
       spinRef.current = false
-      setZoom(z => clampZoom(z * Math.exp(-e.deltaY * 0.0016)))
+      wheelRef.current += e.deltaY
     }
     el.addEventListener('wheel', onWheel, { passive: false })
     return () => el.removeEventListener('wheel', onWheel)
   }, [])
 
+  // The projection ignores zoom: map paths recompute only on ROTATION, and
+  // zooming is a pure group transform (GPU-cheap), so wheel zoom stays smooth.
   const projection = useMemo(
-    () =>
-      geoOrthographic()
-        .translate([W / 2, H / 2])
-        .scale(R * zoom)
-        .rotate(rotation)
-        .clipAngle(90),
-    [rotation, zoom],
+    () => geoOrthographic().translate([W / 2, H / 2]).scale(R).rotate(rotation).clipAngle(90),
+    [rotation],
   )
-  const path = useMemo(() => geoPath(projection), [projection])
+  const mapPaths = useMemo(() => {
+    const path = geoPath(projection)
+    return {
+      sphere: path({ type: 'Sphere' }),
+      grat: path(GRATICULE),
+      land: path(LAND),
+    }
+  }, [projection])
+
+  // Screen position = base projection scaled about the globe center.
+  const toScreen = ([x, y]) => [W / 2 + (x - W / 2) * zoom, H / 2 + (y - H / 2) * zoom]
 
   const points = PHILOSOPHERS.filter(p => isFrontside(COORDS[p.id], rotation)).map(p => {
-    const [x, y] = projection(COORDS[p.id])
+    const [x, y] = toScreen(projection(COORDS[p.id]))
     return { p, x, y, lit: lensOn && year >= p.born && year <= p.died }
   })
   const sel = selectedId ? points.find(d => d.p.id === selectedId) : null
@@ -175,14 +189,20 @@ export default function Globe({ selectedId, onSelect }) {
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerLeave={onPointerUp}
-          onDoubleClick={() => setZoom(z => clampZoom(z * 1.6))}
+          onDoubleClick={() => setZoom(z => clampZoom(z * 2))}
         >
           <defs>
-            <pattern id="ocean" width="4" height="4" patternUnits="userSpaceOnUse">
+            <pattern
+              id="ocean" width="4" height="4" patternUnits="userSpaceOnUse"
+              patternTransform={`scale(${1 / zoom})`}
+            >
               <rect width="4" height="4" fill="#efe6d1" />
               <line x2="4" y1="2" y2="2" stroke="#8a7c62" strokeWidth=".45" opacity=".5" />
             </pattern>
-            <pattern id="landfill" width="5" height="5" patternUnits="userSpaceOnUse">
+            <pattern
+              id="landfill" width="5" height="5" patternUnits="userSpaceOnUse"
+              patternTransform={`scale(${1 / zoom})`}
+            >
               <rect width="5" height="5" fill="#e7dcc2" />
               <circle cx="1.2" cy="1.4" r=".5" fill="#7a6b50" opacity=".55" />
               <circle cx="3.6" cy="3.8" r=".5" fill="#7a6b50" opacity=".4" />
@@ -194,9 +214,11 @@ export default function Globe({ selectedId, onSelect }) {
               <circle r="11" />
             </clipPath>
           </defs>
-          <path className="sphere" d={path({ type: 'Sphere' })} />
-          <path className="grat" d={path(GRATICULE)} />
-          <path className="landp" d={path(LAND)} />
+          <g transform={`translate(${W / 2},${H / 2}) scale(${zoom}) translate(${-W / 2},${-H / 2})`}>
+            <path className="sphere" d={mapPaths.sphere} />
+            <path className="grat" d={mapPaths.grat} />
+            <path className="landp" d={mapPaths.land} />
+          </g>
           {points.map(d => {
             const onScreen = d.x > -60 && d.x < W + 60 && d.y > -60 && d.y < H + 60
             if (!onScreen) return null
@@ -214,7 +236,7 @@ export default function Globe({ selectedId, onSelect }) {
                     <circle className="mini-bg" r="13" />
                     <image
                       clipPath="url(#miniclip)"
-                      href={d.p.portrait}
+                      href={d.p.thumb}
                       x="-11.5"
                       y="-14.5"
                       width="23"
@@ -242,7 +264,7 @@ export default function Globe({ selectedId, onSelect }) {
           {sel && (
             <g className="med" transform={`translate(${sel.x},${sel.y})`}>
               <circle className="med-bg" r="30" />
-              <image clipPath="url(#medclip)" href={sel.p.portrait} x="-27" y="-34" width="54" />
+              <image clipPath="url(#medclip)" href={sel.p.thumb} x="-27" y="-34" width="54" />
               <circle className="med-ring" r="26" />
               <text dy="47" textAnchor="middle">
                 {sel.p.name} · {sel.p.place.name}
