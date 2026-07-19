@@ -4,6 +4,27 @@ import { join } from 'node:path'
 import { ERAS, PHILOSOPHERS, byId, eraById } from '../src/data.js'
 import { DETAILS } from '../src/details.js'
 import { EDGES } from '../src/edges.js'
+import { WORK_LINKS } from '../src/works.js'
+
+describe('curated work links', () => {
+  it('every curated key matches an actual work string exactly', () => {
+    for (const [pid, table] of Object.entries(WORK_LINKS)) {
+      const p = byId[pid]
+      expect(p, pid).toBeDefined()
+      for (const key of Object.keys(table)) {
+        expect(p.works, `${pid}: "${key}"`).toContain(key)
+      }
+    }
+  })
+
+  it('curated links are wikipedia articles, not searches', () => {
+    for (const table of Object.values(WORK_LINKS)) {
+      for (const url of Object.values(table)) {
+        expect(url).toMatch(/^https:\/\/en\.wikipedia\.org\/wiki\//)
+      }
+    }
+  })
+})
 
 describe('influence edges and reading links', () => {
   it('every influence pair has an edge annotation', () => {

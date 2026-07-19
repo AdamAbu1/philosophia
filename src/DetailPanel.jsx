@@ -1,5 +1,6 @@
 import { byId, eraById } from './data.js'
 import { EDGES } from './edges.js'
+import { WORK_LINKS } from './works.js'
 import { fmtRange } from './format.js'
 import Lifeline from './Lifeline.jsx'
 
@@ -32,6 +33,7 @@ export default function DetailPanel({ philosopher: p, onClose, onJump }) {
   }
   const era = eraById[p.era]
   const workLookup = w =>
+    WORK_LINKS[p.id]?.[w] ??
     `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(
       `${w.replace(/\s*\(.*\)$/, '')} ${p.name}`,
     )}`
