@@ -21,8 +21,13 @@ philosophy (48 thinkers), era bands, detail drawer with influence-chip jumps.
 - `src/format.js` — date formatting
 - `public/portraits/<id>.png` — engraved portraits, one per philosopher (test-enforced)
 
-## Commands
+## Commands & deployment
 - `npm run dev` — dev server; `npm test` — Vitest (keep green); `npm run build` — prod build
+- LIVE at https://adamabu1.github.io/philosophia/ — every push to main auto-deploys via
+  .github/workflows/deploy.yml (runs tests first; public repo AdamAbu1/philosophia, SSH remote).
+  Portraits are committed as ~400KB JPEGs; full-res originals live OUTSIDE the repo in
+  ~/Desktop/Philosophy-portrait-originals (96MB of PNGs were purged from git history —
+  don't recommit them). Installable on phones (manifest + icons; Socrates is the app icon).
 
 ## Portraits (Higgsfield MCP)
 Generated 2026-07-19, model `nano_banana_pro`, 2 credits/image, aspect 3:4.
