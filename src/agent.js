@@ -154,13 +154,15 @@ export function parseMarkers(text, { streaming = false } = {}) {
 const thinkingFor = model => (model === 'claude-haiku-4-5' ? {} : { thinking: { type: 'adaptive' } })
 
 // Returns the SDK MessageStream. Caller wires onText, then awaits
-// stream.finalMessage(); stream.abort() cancels.
-export function streamReply({ apiKey, model, system, messages, onText }) {
+// stream.finalMessage(); stream.abort() cancels. `effort` trades depth for
+// latency (voice mode) — Haiku 4.5 predates the parameter, so callers skip it.
+export function streamReply({ apiKey, model, system, messages, onText, effort }) {
   const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true })
   const stream = client.messages.stream({
     model,
     max_tokens: 8000, // cost guard: caps a runaway reply at cents, ample for chat
     ...thinkingFor(model),
+    ...(effort && model !== 'claude-haiku-4-5' ? { output_config: { effort } } : {}),
     system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
     messages,
   })

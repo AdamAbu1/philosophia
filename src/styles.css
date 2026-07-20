@@ -235,3 +235,20 @@ canvas.globe:active { cursor: grabbing; }
   width: 40px; height: 40px; flex: none; object-fit: cover;
   mix-blend-mode: multiply; opacity: .9;
 }
+.micbtn {
+  flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--ink-soft);
+  background: transparent; color: var(--ink-soft); font-size: 13px; line-height: 1;
+  cursor: pointer; font-family: inherit; align-self: center;
+}
+.micbtn:hover { background: rgba(74, 66, 55, .08); }
+.micbtn.listening { animation: micpulse 1.4s ease-in-out infinite; color: #8a3b2a; border-color: #8a3b2a; }
+@keyframes micpulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(138, 59, 42, .35); }
+  50% { box-shadow: 0 0 0 7px rgba(138, 59, 42, 0); }
+}
+.agent-medallion.speaking { animation: medallionpulse 1.6s ease-in-out infinite; }
+@keyframes medallionpulse {
+  0%, 100% { box-shadow: 0 0 0 3px var(--paper), 0 0 0 4px var(--rule); }
+  50% { box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--ink-soft); }
+}
+.agent-link.voice-on { color: var(--ink); text-decoration: underline; }

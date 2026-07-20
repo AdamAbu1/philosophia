@@ -1,6 +1,9 @@
 // "Ask Philosophia" — inline conversational panel below the globe.
-// Two modes: the resident guide (default) and persona conversations entered
-// from a thinker's entry. BYOK: the user's Anthropic key lives in localStorage.
+// Modes: the resident guide (default) and persona conversations entered from a
+// thinker's entry. BYOK: the user's Anthropic key lives in localStorage.
+// Voice mode composes a spoken conversation entirely in the browser: mic →
+// SpeechRecognition → persona chat → sentence-streamed speech (system voices,
+// or ElevenLabs character voices when that key is present).
 import { useEffect, useRef, useState } from 'react'
 import { byId } from './data.js'
 import {
@@ -18,6 +21,17 @@ import {
   parseMarkers,
   streamReply,
 } from './agent.js'
+import {
+  voiceSupport,
+  makeSpeaker,
+  makeListener,
+  speakableText,
+  nextSentences,
+  flushRemainder,
+  getElevenLabsKey,
+  setElevenLabsKey,
+  VOICE_REGISTER,
+} from './voice.js'
 
 function Reply({ text, streaming, onSelect }) {
   return (
@@ -40,24 +54,54 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
   const [keyed, setKeyed] = useState(() => !!getApiKey())
   const [showKeyForm, setShowKeyForm] = useState(false)
   const [keyDraft, setKeyDraft] = useState('')
+  const [elDraft, setElDraft] = useState('')
   const [model, setModelState] = useState(() => getModel())
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  const [voiceOn, setVoiceOn] = useState(false)
+  const [listening, setListening] = useState(false)
+  const [speaking, setSpeaking] = useState(false)
+
   const streamRef = useRef(null)
+  const speakerRef = useRef(null)
+  const listenerRef = useRef(null)
   const logRef = useRef(null)
+  const voiceOnRef = useRef(false)
+  const busyRef = useRef(false)
+  const personaRef = useRef(personaId)
 
   const persona = personaId ? byId[personaId] : null
+  const support = voiceSupport()
+  voiceOnRef.current = voiceOn
+  busyRef.current = busy
+  personaRef.current = personaId
+
+  const quiesceVoice = () => {
+    speakerRef.current?.stop()
+    speakerRef.current = null
+    listenerRef.current?.abort()
+    setSpeaking(false)
+    setListening(false)
+  }
 
   // Entering or leaving a persona starts a fresh conversation.
   useEffect(() => {
     streamRef.current?.abort()
+    quiesceVoice()
     setMessages([])
     setError(null)
   }, [personaId])
 
-  useEffect(() => () => streamRef.current?.abort(), [])
+  useEffect(
+    () => () => {
+      streamRef.current?.abort()
+      speakerRef.current?.stop()
+      listenerRef.current?.abort()
+    },
+    [],
+  )
 
   useEffect(() => {
     const el = logRef.current
@@ -67,11 +111,14 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
   const saveKey = e => {
     e.preventDefault()
     const k = keyDraft.trim()
-    if (!k) return
-    setApiKey(k)
-    setKeyed(true)
-    setShowKeyForm(false)
+    if (k) {
+      setApiKey(k)
+      setKeyed(true)
+    }
+    if (elDraft.trim()) setElevenLabsKey(elDraft.trim())
+    if (k || getApiKey()) setShowKeyForm(false)
     setKeyDraft('')
+    setElDraft('')
     setError(null)
   }
 
@@ -82,17 +129,71 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
 
   const clearConversation = () => {
     streamRef.current?.abort()
+    quiesceVoice()
     setMessages([])
     setError(null)
   }
 
-  const stop = () => streamRef.current?.abort()
+  const stopAll = () => {
+    streamRef.current?.abort()
+    quiesceVoice()
+  }
 
-  const send = async e => {
-    e.preventDefault()
-    const question = input.trim()
-    if (!question || busy || !getApiKey()) return
+  const toggleVoice = () => {
+    if (voiceOn) {
+      quiesceVoice()
+      setVoiceOn(false)
+    } else {
+      // A user-gesture utterance unlocks speech on iOS before the first
+      // streamed sentence arrives outside a gesture context.
+      if (support.tts) {
+        try {
+          speechSynthesis.speak(new SpeechSynthesisUtterance(''))
+          speechSynthesis.cancel()
+        } catch { /* fine */ }
+      }
+      setVoiceOn(true)
+    }
+  }
 
+  const startListening = () => {
+    if (!support.stt || busyRef.current) return
+    speakerRef.current?.stop()
+    setSpeaking(false)
+    if (!listenerRef.current) {
+      listenerRef.current = makeListener({
+        onInterim: t => setInput(t),
+        onFinal: t => {
+          setInput('')
+          send(t)
+        },
+        onEnd: () => setListening(false),
+        onError: e => {
+          if (e !== 'no-speech' && e !== 'aborted')
+            setError(
+              e === 'not-allowed'
+                ? 'The microphone was blocked — allow it in the browser and try again.'
+                : `Microphone: ${e}`,
+            )
+        },
+      })
+      if (!listenerRef.current) return
+    }
+    setError(null)
+    setListening(true)
+    listenerRef.current.start()
+  }
+
+  const micPress = () => {
+    if (listening) listenerRef.current?.stop()
+    else startListening()
+  }
+
+  const send = async question => {
+    question = (question ?? '').trim()
+    if (!question || busyRef.current || !getApiKey()) return
+
+    const wantSpeech = voiceOnRef.current
     const lastReply = [...messages].reverse().find(m => m.role === 'assistant')?.text ?? ''
     const ids = contextIds(question, { personaId, selectedId, lastReply })
     const apiMessages = []
@@ -111,18 +212,49 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
     ])
     setInput('')
     setBusy(true)
+    busyRef.current = true
     setError(null)
 
+    // Voice: resolve the speaker first (first ElevenLabs use fetches the
+    // voice library; cached afterwards), so sentences can play as they land.
+    speakerRef.current?.stop()
+    let speaker = null
+    if (wantSpeech) {
+      speaker = await makeSpeaker(personaId, {
+        onStart: () => setSpeaking(true),
+        onIdle: () => {
+          setSpeaking(false)
+          if (voiceOnRef.current && !busyRef.current && support.stt) startListening()
+        },
+        onError: () => setError('Character voices unavailable — using system voices.'),
+      })
+      speakerRef.current = speaker
+    }
+
+    let accumulated = ''
+    let spokenOffset = 0
+    const speakNew = () => {
+      if (!speaker) return
+      const { sentences, offset } = nextSentences(accumulated, spokenOffset)
+      spokenOffset = offset
+      for (const s of sentences) speaker.enqueue(speakableText(s))
+    }
+
+    const baseSystem = persona ? buildPersonaSystem(persona.id) : buildGuideSystem()
     const stream = streamReply({
       apiKey: getApiKey(),
       model,
-      system: persona ? buildPersonaSystem(persona.id) : buildGuideSystem(),
+      system: wantSpeech ? baseSystem + VOICE_REGISTER : baseSystem,
+      effort: wantSpeech ? 'low' : undefined,
       messages: apiMessages,
-      onText: delta =>
+      onText: delta => {
+        accumulated += delta
         setMessages(ms => {
           const last = ms[ms.length - 1]
           return [...ms.slice(0, -1), { ...last, text: last.text + delta }]
-        }),
+        })
+        speakNew()
+      },
     })
     streamRef.current = stream
 
@@ -136,7 +268,20 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
         ...ms.slice(0, -1),
         { role: 'assistant', text, blocks: final.content, streaming: false },
       ])
+      if (speaker) {
+        const rest = flushRemainder(accumulated, spokenOffset)
+        if (rest) speaker.enqueue(speakableText(rest))
+        else if (speaker.pending <= 0) {
+          setSpeaking(false)
+          if (voiceOnRef.current && support.stt) {
+            busyRef.current = false
+            startListening()
+          }
+        }
+      }
     } catch (err) {
+      speaker?.stop()
+      setSpeaking(false)
       // Keep whatever streamed before the failure; drop an empty placeholder.
       setMessages(ms => {
         const last = ms[ms.length - 1]
@@ -161,18 +306,20 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
       }
     } finally {
       setBusy(false)
+      busyRef.current = false
       streamRef.current = null
     }
   }
 
   const showForm = !keyed || showKeyForm
+  const hasElKey = !!getElevenLabsKey()
 
   return (
     <section className="agent" aria-label="Ask Philosophia">
       <div className="agent-frame">
         <div className="agent-head">
           <img
-            className="agent-medallion"
+            className={speaking ? 'agent-medallion speaking' : 'agent-medallion'}
             src={persona ? persona.thumb : 'portraits/philosophia.jpg'}
             alt={persona ? `Engraved portrait of ${persona.name}` : 'Lady Philosophia, engraved'}
           />
@@ -195,9 +342,18 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
                 </option>
               ))}
             </select>
+            {support.tts && !showForm && (
+              <button
+                className={voiceOn ? 'agent-link voice-on' : 'agent-link'}
+                onClick={toggleVoice}
+                aria-pressed={voiceOn}
+              >
+                {voiceOn ? 'voice on' : 'voice off'}
+              </button>
+            )}
             {keyed && !showKeyForm && (
               <button className="agent-link" onClick={() => setShowKeyForm(true)}>
-                key
+                keys
               </button>
             )}
             {messages.length > 0 && (
@@ -221,11 +377,25 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
                 type="password"
                 value={keyDraft}
                 onChange={e => setKeyDraft(e.target.value)}
-                placeholder="sk-ant-…"
+                placeholder={keyed ? 'Anthropic key (saved — blank keeps it)' : 'sk-ant-…'}
                 autoComplete="off"
                 aria-label="Anthropic API key"
               />
-              <button type="submit" disabled={!keyDraft.trim()}>
+            </div>
+            <div className="agent-row">
+              <input
+                type="password"
+                value={elDraft}
+                onChange={e => setElDraft(e.target.value)}
+                placeholder={
+                  hasElKey
+                    ? 'ElevenLabs key (saved — blank keeps it)'
+                    : 'ElevenLabs key — optional, for character voices'
+                }
+                autoComplete="off"
+                aria-label="ElevenLabs API key (optional)"
+              />
+              <button type="submit" disabled={!keyDraft.trim() && !elDraft.trim() && !keyed}>
                 save
               </button>
               {keyed && (
@@ -240,7 +410,9 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
             {messages.length === 0 && (
               <p className="agent-hint">
                 {persona
-                  ? `You stand before ${persona.name} — ask what you will.`
+                  ? voiceOn
+                    ? `You stand before ${persona.name} — press the mic and speak.`
+                    : `You stand before ${persona.name} — ask what you will.`
                   : 'Ask about any thinker, school, or idea — the guide answers from the atlas’s own entries, and every name it cites turns the globe.'}
               </p>
             )}
@@ -258,17 +430,50 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
               </div>
             )}
             {error && <p className="agent-error">{error}</p>}
-            <form className="agent-row" onSubmit={send}>
+            <form
+              className="agent-row"
+              onSubmit={e => {
+                e.preventDefault()
+                send(input)
+              }}
+            >
+              {voiceOn && support.stt && (
+                <button
+                  type="button"
+                  className={listening ? 'micbtn listening' : 'micbtn'}
+                  onClick={micPress}
+                  aria-label={listening ? 'Stop listening' : 'Speak'}
+                  title={listening ? 'listening — tap to stop' : 'tap to speak'}
+                >
+                  ◉
+                </button>
+              )}
               <input
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                placeholder={persona ? `Address ${persona.name}…` : 'Ask the guide…'}
+                placeholder={
+                  listening
+                    ? 'listening…'
+                    : persona
+                      ? `Address ${persona.name}…`
+                      : 'Ask the guide…'
+                }
                 aria-label="Your question"
               />
-              <button type={busy ? 'button' : 'submit'} onClick={busy ? stop : undefined} disabled={!busy && !input.trim()}>
+              <button
+                type={busy ? 'button' : 'submit'}
+                onClick={busy ? stopAll : undefined}
+                disabled={!busy && !input.trim()}
+              >
                 {busy ? 'stop' : 'ask'}
               </button>
             </form>
+            {voiceOn && !support.stt && (
+              <p className="agent-note">
+                Spoken replies are on; this browser has no speech recognition, so type your
+                side of the conversation.
+              </p>
+            )}
           </>
         )}
       </div>
