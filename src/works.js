@@ -275,4 +275,54 @@ export const WORK_LINKS = {
     'Mishneh Torah (1180)': A('Mishneh_Torah'),
     'The Guide for the Perplexed (1190)': A('The_Guide_for_the_Perplexed'),
   },
+  epictetus: {
+    'Discourses (transcribed by Arrian, c. 108)': A('Discourses_of_Epictetus'),
+    'Enchiridion (the Handbook)': A('Enchiridion_of_Epictetus'),
+  },
+  boethius: {
+    'The Consolation of Philosophy (c. 524)': A('The_Consolation_of_Philosophy'),
+  },
+  montaigne: {
+    'Essays (1580–1595)': A('Essays_(Montaigne)'),
+  },
+  pascal: {
+    'Provincial Letters (1656–57)': A('Lettres_provinciales'),
+    'Pensées (1670, posthumous)': A('Pens%C3%A9es'),
+  },
+  zerayacob: {
+    'Hatata (1667)': A('Hatata'),
+  },
+  frege: {
+    'Begriffsschrift (1879)': A('Begriffsschrift'),
+    'The Foundations of Arithmetic (1884)': A('The_Foundations_of_Arithmetic'),
+    '"On Sense and Reference" (1892)': A('Sense_and_reference'),
+  },
+  husserl: {
+    'Logical Investigations (1900–01)': A('Logical_Investigations'),
+    'Cartesian Meditations (1931)': A('Cartesian_Meditations'),
+    'The Crisis of European Sciences (1936)': A('The_Crisis_of_European_Sciences_and_Transcendental_Phenomenology'),
+  },
+  dogen: {
+    'Shōbōgenzō (1231–1253)': A('Sh%C5%8Db%C5%8Dgenz%C5%8D'),
+  },
+  nishida: {
+    'An Inquiry into the Good (1911)': A('An_Inquiry_into_the_Good'),
+  },
+  popper: {
+    'The Logic of Scientific Discovery (1934)': A('The_Logic_of_Scientific_Discovery'),
+    'The Open Society and Its Enemies (1945)': A('The_Open_Society_and_Its_Enemies'),
+    'Conjectures and Refutations (1963)': A('Conjectures_and_Refutations'),
+  },
+  quine: {
+    '"Two Dogmas of Empiricism" (1951)': A('Two_Dogmas_of_Empiricism'),
+    'Word and Object (1960)': A('Word_and_Object'),
+  },
+  weil: {
+    'Gravity and Grace (1947, posthumous)': A('Gravity_and_Grace'),
+    'The Need for Roots (1949)': A('The_Need_for_Roots'),
+    'Waiting for God (1950)': A('Waiting_for_God'),
+  },
+  anscombe: {
+    '"Modern Moral Philosophy" (1958)': A('Modern_Moral_Philosophy'),
+  },
 }

@@ -101,7 +101,7 @@ describe('philosopher data schema', () => {
       expect(p.blurb.length).toBeGreaterThan(40)
       expect(p.line).toBeTruthy()
       expect(Array.isArray(p.influences)).toBe(true)
-      expect(['western', 'chinese', 'indian', 'islamic', 'jewish']).toContain(p.tradition)
+      expect(['western', 'chinese', 'indian', 'islamic', 'jewish', 'japanese', 'african']).toContain(p.tradition)
       expect(p.portrait).toBe(`portraits/${p.id}.jpg`)
     }
   })

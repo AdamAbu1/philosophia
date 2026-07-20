@@ -701,4 +701,174 @@ export const DETAILS = {
     works: ['Mishneh Torah (1180)', 'The Guide for the Perplexed (1190)'],
     legacy: '"From Moses to Moses there arose none like Moses": Jewish thought is divided by him, and Aquinas cites "Rabbi Moses" as a master.',
   },
+  epictetus: {
+    bio: 'Born a slave in Phrygia — his name just means "acquired" — Epictetus was lamed, tradition says, by a master, freed after Nero’s death, and banished from Rome with all philosophers by Domitian. He taught in a small Greek town, owned a lamp and a bed, wrote nothing; his student Arrian transcribed the lectures.',
+    ideas: [
+      { title: 'The dichotomy of control', text: 'Some things are up to us — judgment, impulse, desire — and some are not: body, property, reputation. Every misery comes from confusing the two.' },
+      { title: 'It is not things that disturb us', text: 'But our opinions about things. Remove the judgment "I am harmed" and the harm disappears — the sentence at the root of modern cognitive therapy.' },
+      { title: 'The role player', text: 'You are an actor in a drama the author casts: play the invalid, the exile, or the ruler well — the choosing of the role belongs to another.' },
+    ],
+    works: ['Discourses (transcribed by Arrian, c. 108)', 'Enchiridion (the Handbook)'],
+    legacy: 'The slave who taught the emperor — Marcus Aurelius credits him by name — and the Stoic whose handbook still ships in soldiers’ kits.',
+  },
+  hypatia: {
+    bio: 'Daughter of the mathematician Theon, Hypatia headed Alexandria’s Neoplatonist school, edited and preserved the great mathematical texts — Ptolemy, Apollonius, Diophantus — and advised the city’s Roman prefect. In 415, amid a power struggle with the bishop Cyril, a Christian mob dragged her from her carriage and murdered her.',
+    ideas: [
+      { title: 'Mathematics as ascent', text: 'In her school geometry and astronomy were rungs on the Neoplatonic ladder — training the soul from the sensible toward the intelligible One.' },
+      { title: 'Philosophy above faction', text: 'She taught pagans and Christians together in a city tearing itself apart over creed — two of her students became bishops.' },
+      { title: 'The examined heavens', text: 'Her editions and commentaries kept the exact sciences alive at the edge of antiquity; her students carried them east before the schools closed.' },
+    ],
+    works: ['Commentaries on Diophantus, Apollonius, and Ptolemy (lost; her editions survive within later texts)'],
+    legacy: 'The martyr of ancient learning — her death became the emblem of what was lost, and her school’s exiles seeded the philosophy that survived.',
+  },
+  boethius: {
+    bio: 'Heir of one great Roman house and adopted into another, Boethius was consul, master of offices under Theoderic, and translator on a mission — to render all of Plato and Aristotle into Latin. Accused of treason on flimsy evidence, he wrote The Consolation of Philosophy in prison at Pavia and was executed around 524.',
+    ideas: [
+      { title: 'The wheel of fortune', text: 'Fortune’s nature is to turn; her gifts were never yours. Lady Philosophy’s cure begins by taking back nothing that was truly your own.' },
+      { title: 'The self-sufficiency of the good', text: 'Happiness cannot rest on what can be taken away; tracing every partial good upward, the argument arrives at the one perfect good, which is God.' },
+      { title: 'Eternity and foreknowledge', text: 'God does not foresee — He sees, from an eternal present outside time; so providence and human freedom never touch. The definition of eternity every scholastic borrowed.' },
+    ],
+    works: ['The Consolation of Philosophy (c. 524)', 'Theological Tractates', 'Translations of Aristotle’s logic'],
+    legacy: 'For a thousand years the most read book in Europe after the Bible; his Latin logic and vocabulary were the Middle Ages’ starter kit.',
+  },
+  montaigne: {
+    bio: 'Mayor of Bordeaux, courtier in the wars of religion, and — after retiring at thirty-eight to his tower — inventor of the essay: essai, a trial, an attempt. He covered his ceiling beams with quotations, rode out plague and civil war, and revised his self-portraits until death, motto hanging over it all: Que sais-je?',
+    ideas: [
+      { title: 'The self as subject', text: 'He made one man — himself, wavering, digestive, inconsistent — the field of study, and found the whole human condition there: "each man bears the entire form of the human condition."' },
+      { title: 'Revived skepticism', text: 'Custom, not reason, dictates most of what we call truth; the cannibals judge us as barbarous as we judge them. Suspend, compare, and be humane.' },
+      { title: 'To philosophize is to learn to die', text: 'Rehearse mortality until it loses its grip — then live: his late essays trade Stoic armor for gratitude toward ordinary life.' },
+    ],
+    works: ['Essays (1580–1595)'],
+    legacy: 'Descartes answered his doubt, Pascal wrestled his shadow, and every personal essay since — every honest "I" on a page — descends from the tower.',
+  },
+  pascal: {
+    bio: 'A prodigy who proved theorems as a boy, built a mechanical calculator for his father’s tax work, and co-founded probability theory in letters with Fermat, Pascal converted decisively after a night of mystical fire in 1654 — the record sewn into his coat, found after his death at thirty-nine, along with the unfinished notes we call the Pensées.',
+    ideas: [
+      { title: 'The wager', text: 'Reason cannot decide whether God exists — but you must bet. Weigh the stakes: finite loss against infinite gain. The founding move of decision theory, aimed at the soul.' },
+      { title: 'The heart’s reasons', text: 'First principles — space, time, number, God — are felt, not proved: "the heart has its reasons, which reason does not know." Skepticism is answered below argument.' },
+      { title: 'Greatness and wretchedness', text: 'Man is a reed, the weakest in nature, but a thinking reed — a chimera of glory and refuse whose contradiction no philosophy explains and whose diversions cannot hide.' },
+    ],
+    works: ['Provincial Letters (1656–57)', 'Pensées (1670, posthumous)'],
+    legacy: 'Probability, decision theory, existentialism’s anxiety, and Christianity’s sharpest apologetics all trace to one short, burning life.',
+  },
+  conway: {
+    bio: 'Self-taught in an era that barred women from universities, Anne Conway corresponded with the Cambridge Platonist Henry More as his equal, endured migraines so severe her physician was the era’s celebrity chemist, and wrote a single treatise found in her desk after death — published anonymously in Latin, admired by Leibniz.',
+    ideas: [
+      { title: 'Against dead matter', text: 'Descartes’ inert extended stuff cannot exist: every creature is living, perceiving spirit in degrees — matter and mind differ in density, not in kind.' },
+      { title: 'Process and perfectibility', text: 'Creatures continually change, and can rise: every being tends toward greater life and perfection — a process metaphysics two centuries before the name.' },
+      { title: 'A middle nature', text: 'Between the unchangeable God and mutable creatures stands Christ as middle being — a system reconciling her Platonism, Kabbalah, and the Quakerism she joined at the end.' },
+    ],
+    works: ['The Principles of the Most Ancient and Modern Philosophy (1690, posthumous)'],
+    legacy: 'Leibniz read her Principles and said his views came near to hers — the word "monad" likely reached him from her circle.',
+  },
+  zerayacob: {
+    bio: 'An Aksumite scholar denounced during Emperor Susenyos’s Catholic conversion campaigns, Zera Yacob hid for two years in a cave below a river gorge, praying and reasoning. Emerging when the persecution ended, he settled in Enfraz, married, and at a student’s request wrote his Hatata — "inquiry" — in 1667.',
+    ideas: [
+      { title: 'The light of reason', text: 'Every faith claims revelation and each contradicts the others; what God actually gave everyone is intelligence. Test each doctrine — fasting, monasticism, slavery, polygamy — against created nature and keep what survives.' },
+      { title: 'Prayer as method', text: 'His rationalism is devotional: examination is itself worship, and the Psalms he recited in the cave frame every chapter of the inquiry.' },
+      { title: 'The equality of persons', text: 'From nature’s order he argued against slavery and for the equality of women in marriage — conclusions Europe’s Enlightenment took another century to print.' },
+    ],
+    works: ['Hatata (1667)'],
+    legacy: 'A rationalist meditation composed in an Ethiopian cave in Descartes’ own decade — the strongest single rebuke to the idea that philosophy has a home continent.',
+  },
+  amo: {
+    bio: 'Taken from Axim on the Gold Coast around age four and presented to the Duke of Brunswick-Wolfenbüttel, Amo was raised and educated at court, earned doctorates in law and philosophy, and lectured at Halle, Wittenberg, and Jena. As the racial climate hardened and his patrons died, he returned to Ghana around 1747.',
+    ideas: [
+      { title: 'The apathy of the mind', text: 'Against Descartes: sensation belongs to the living body, not to spirit. A mind that literally felt would be divisible and passive — the human being senses; the mind understands.' },
+      { title: 'Rights of Africans', text: 'His first disputation defended the rights of Black Africans in Europe, arguing from Roman law and history — the text is lost, the title defiant.' },
+      { title: 'Sober philosophizing', text: 'His Halle treatise on the art of philosophizing insists on distinguishing what belongs to logic, to psychology, and to metaphysics — an early map of philosophy of mind’s territory.' },
+    ],
+    works: ['On the Impassivity of the Human Mind (1734)', 'Treatise on the Art of Philosophising Soberly and Accurately (1738)'],
+    legacy: 'The first African philosopher in a modern European university — rediscovered as both a sharp critic of dualism and a mirror held to the Enlightenment’s contradictions.',
+  },
+  peirce: {
+    bio: 'Son of Harvard’s great mathematician, Peirce worked thirty years for the Coast Survey measuring gravity, was driven from academia by scandal and enemies, and spent his last decades writing in poverty in Pennsylvania — William James, whom he never stopped correcting, quietly organized the fund that kept him alive.',
+    ideas: [
+      { title: 'The pragmatic maxim', text: 'Consider what practical effects the object of your conception has: your conception of those effects is the whole of your conception. Meaning lives downstream, in consequences.' },
+      { title: 'Semiotics', text: 'All thought is in signs: icon, index, symbol — a triadic theory of representation that founded the modern study of meaning.' },
+      { title: 'Fallibilism and inquiry', text: 'Belief is a habit fixed by inquiry; doubt is its irritation. No belief is beyond revision, and truth is what inquiry would converge on in the long run.' },
+    ],
+    works: ['"The Fixation of Belief" (1877)', '"How to Make Our Ideas Clear" (1878)', 'Collected Papers (posthumous)'],
+    legacy: 'Pragmatism, semiotics, and swaths of modern logic all begin in his unpublished nachlass — the buried treasure of American philosophy.',
+  },
+  frege: {
+    bio: 'Frege taught mathematics at Jena for forty-four years and was ignored for most of them; his Begriffsschrift of 1879 — a two-mark booklet — contained the greatest advance in logic since Aristotle. Russell’s 1902 letter showing his system inconsistent arrived as volume two was in press; his appendix acknowledging it is scholarship’s most graceful heartbreak. His late diaries reveal ugly antisemitic politics — the man was smaller than the work.',
+    ideas: [
+      { title: 'Quantified logic', text: 'Function and argument replace subject and predicate; quantifiers bind variables. Every logic course, every programming language type system, descends from the booklet nobody read.' },
+      { title: 'Sense and reference', text: '"The morning star is the evening star" is informative though both name Venus — because names carry a sense (mode of presentation) as well as a reference. The founding distinction of philosophy of language.' },
+      { title: 'Anti-psychologism', text: 'Logic is not how we happen to think but how one must think to think truly; thoughts are objective, graspable, not mental episodes.' },
+    ],
+    works: ['Begriffsschrift (1879)', 'The Foundations of Arithmetic (1884)', '"On Sense and Reference" (1892)'],
+    legacy: 'Analytic philosophy’s founding father: Russell built on him, Wittgenstein revered him, and Kripke’s revolution was aimed at his theory of names.',
+  },
+  husserl: {
+    bio: 'A Moravian mathematician converted to philosophy by Brentano, Husserl founded phenomenology at Göttingen and Freiburg, filling forty thousand pages of shorthand. His chosen successor Heidegger dedicated Being and Time to him, then as rector enforced the race laws that barred Husserl — a Jewish convert — from the university he had made famous. A Belgian monk smuggled the manuscripts out past the Nazis.',
+    ideas: [
+      { title: 'Intentionality', text: 'Consciousness is always consciousness of something — directedness is its essence, and describing the structures of that directedness is philosophy’s first task.' },
+      { title: 'The epoché', text: 'Bracket the natural attitude — every assumption that the world simply exists — and examine experience purely as it gives itself. Not doubt, but suspension: Descartes radicalized.' },
+      { title: 'The lifeworld', text: 'Science grows from and forgets the pre-scientific world of lived experience; the late Husserl made recovering that soil the answer to Europe’s crisis of meaning.' },
+    ],
+    works: ['Logical Investigations (1900–01)', 'Ideas I (1913)', 'Cartesian Meditations (1931)', 'The Crisis of European Sciences (1936)'],
+    legacy: 'Phenomenology became the continent’s method — Heidegger, Sartre, Beauvoir, Merleau-Ponty, and Stein all began as his readers.',
+  },
+  dogen: {
+    bio: 'Orphaned young in aristocratic Kyoto, Dōgen took Tendai vows at twelve, sailed to Song China at twenty-three, and found his answer in a master who just sat. Returning with "empty hands," he founded Eihei-ji deep in the mountains and wrote the Shōbōgenzō — Zen’s most demanding and most beautiful book.',
+    ideas: [
+      { title: 'Practice is enlightenment', text: 'Zazen is not a technique for attaining awakening; sitting itself is awakening enacted. The separation of means and end is the delusion.' },
+      { title: 'Being-time', text: 'Uji: time is not a stream things float in — each moment is the whole of being, and you are time. Heidegger’s question, answered in thirteenth-century Japan.' },
+      { title: 'Body-mind dropped off', text: 'Shinjin datsuraku — the phrase of his awakening: the self is not transcended by effort but dropped, the way a ripe fruit falls.' },
+    ],
+    works: ['Shōbōgenzō (1231–1253)', 'Instructions for the Cook'],
+    legacy: 'Sōtō Zen’s founder and, by modern consensus, Japan’s greatest philosopher — phenomenologists keep discovering him with a start.',
+  },
+  nishida: {
+    bio: 'A provincial schoolteacher who sat zazen for a decade while reading James and Hegel, Nishida rose to the Kyoto chair and wrote Japan’s first fully original modern philosophy. His life was battered — five children lost, a paralyzed wife — and his diary records it beside the logic; he died months before Hiroshima.',
+    ideas: [
+      { title: 'Pure experience', text: 'Before subject and object split, there is experience itself — hearing the sound before "I" and "bell" appear. James’s radical empiricism, deepened by Zen into a first principle.' },
+      { title: 'The logic of place', text: 'Judgments happen in a basho, a place or field; the ultimate field is absolute nothingness — not blank void but that within which all being and thought arise.' },
+      { title: 'Absolutely contradictory self-identity', text: 'The world is one and many, continuous and discontinuous, at once; reality holds contradiction together rather than resolving it — a dialectic without Hegel’s synthesis.' },
+    ],
+    works: ['An Inquiry into the Good (1911)', 'The Logic of Place (1926)', 'Last Writings (1945)'],
+    legacy: 'Founder of the Kyoto School — the twentieth century’s great East-West bridge, taken seriously in both directions.',
+  },
+  popper: {
+    bio: 'Vienna-born and formed by watching Marxists and Freudians explain everything, Popper asked what Einstein had that they lacked: a prediction that could fail. He fled Austria for New Zealand, wrote The Open Society during the war "as my war effort," and ended at the LSE, knighted, combative to the last — the poker he waved at Wittgenstein is its own book.',
+    ideas: [
+      { title: 'Falsifiability', text: 'Science is demarcated not by confirmation — everything confirms a vague theory — but by exposure: bold conjectures that forbid outcomes, tested to destruction.' },
+      { title: 'Conjectures and refutations', text: 'Knowledge grows by guessing and criticizing, not by induction from data; we learn from errors, and rationality is openness to being wrong.' },
+      { title: 'The open society', text: 'Utopian engineering, from Plato to Marx, ends in tyranny because it cannot be refuted piecemeal; democratic institutions are science’s method applied to politics — arrangements for removing rulers without bloodshed.' },
+    ],
+    works: ['The Logic of Scientific Discovery (1934)', 'The Open Society and Its Enemies (1945)', 'Conjectures and Refutations (1963)'],
+    legacy: 'The scientist’s philosopher of science — and the cold war’s most read defense of liberal democracy.',
+  },
+  quine: {
+    bio: 'An Akron stamp-collector turned Harvard logician, Quine wrote his doctorate under Whitehead, spent formative months with the Vienna Circle, and then dismantled its central dogma. He typed his books on a 1927 Remington from which he removed the question mark — he said he dealt in answers.',
+    ideas: [
+      { title: 'Two dogmas', text: 'The analytic-synthetic distinction and reductionism both fail: no statement is true purely by meaning, and none faces experience alone. Our beliefs meet the world as a corporate body.' },
+      { title: 'The web of belief', text: 'Knowledge is a web: experience impinges at the edges, logic and mathematics sit at the center — revisable in principle, protected only by the cost of revision.' },
+      { title: 'Indeterminacy of translation', text: 'Radical translation underdetermines meaning: does "gavagai" mean rabbit, or undetached rabbit part? There is no fact of the matter — meaning is behavioral through and through.' },
+    ],
+    works: ['"Two Dogmas of Empiricism" (1951)', 'Word and Object (1960)', 'Ontological Relativity (1969)'],
+    legacy: 'Mid-century analytic philosophy’s center of gravity; naturalized epistemology — philosophy as continuous with science — is his flag.',
+  },
+  weil: {
+    bio: 'Alain’s star pupil and agrégée in philosophy, Weil left teaching for a year of factory work to know affliction from inside, carried a rifle (badly) in Catalonia, and had three mystical encounters she never dramatized. In London with the Free French, tubercular and refusing more food than the occupied ate, she died at thirty-four. Camus published her notebooks and called her the only great spirit of the age.',
+    ideas: [
+      { title: 'Attention', text: 'Absolutely unmixed attention is prayer: the capacity to attend to another’s affliction without flinching or consoling is the rarest thing, and the whole of love of neighbor.' },
+      { title: 'Affliction and decreation', text: 'Malheur crushes the soul in a way suffering does not; grace enters only where the ego consents to its own undoing — God withdraws so the world can be, and we imitate by decreation.' },
+      { title: 'Rootedness', text: 'The soul’s most ignored need is roots: participation in community, work, and past. Uprooting — by conquest, money, or mass media — is the modern disease; obligations precede rights.' },
+    ],
+    works: ['Gravity and Grace (1947, posthumous)', 'The Need for Roots (1949)', 'Waiting for God (1950)'],
+    legacy: 'The saint of the unconsoled: ethicists of attention, theologians, and activists all claim her, and none can domesticate her.',
+  },
+  anscombe: {
+    bio: 'Converted to Catholicism as a schoolgirl by reading, Anscombe became Wittgenstein’s student, translator, and literary executor — he said she was the only one who understood him. She publicly opposed Oxford’s honorary degree for Truman over Hiroshima, debated C. S. Lewis to a revision, bore seven children, and held Wittgenstein’s own Cambridge chair.',
+    ideas: [
+      { title: 'Intention', text: 'Actions are intentional under a description, known without observation, and explained by reasons rather than causes — the little book that founded modern action theory.' },
+      { title: 'Modern moral philosophy', text: 'Duty and obligation are survivals of a divine-law ethics that lost its lawgiver; stop doing ethics until there is an adequate philosophy of psychology — and meanwhile, look to Aristotle. Virtue ethics was reborn in one paper; it also coined "consequentialism," as an accusation.' },
+      { title: 'The first person', text: '"I" is not a name that refers to a self — a deflation of Descartes’ ego delivered with Wittgensteinian tools.' },
+    ],
+    works: ['Intention (1957)', '"Modern Moral Philosophy" (1958)', 'An Introduction to Wittgenstein’s Tractatus (1959)'],
+    legacy: 'Action theory and the virtue-ethics revival both begin with her; the century’s most formidable philosophical controversialist of either sex.',
+  },
 }
