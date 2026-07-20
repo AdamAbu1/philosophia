@@ -23,7 +23,7 @@ function EdgeList({ label, entries, onJump }) {
   )
 }
 
-export default function DetailPanel({ philosopher: p, onClose, onJump }) {
+export default function DetailPanel({ philosopher: p, onClose, onJump, onConverse }) {
   if (!p) {
     return (
       <div className="detail-hint">
@@ -55,6 +55,9 @@ export default function DetailPanel({ philosopher: p, onClose, onJump }) {
           {p.school !== '—' && <span className="c">{p.school}</span>}
         </div>
         <p className="oneline">“{p.line}”</p>
+        <button className="converse" onClick={() => onConverse(p.id)}>
+          Converse with {p.name} ↓
+        </button>
         <h4>FURTHER READING</h4>
         <div className="reading">
           {p.links.map(l => (
