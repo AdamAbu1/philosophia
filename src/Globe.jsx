@@ -522,6 +522,7 @@ export default function Globe({ selectedId, onSelect }) {
           onChange={onScrub}
           aria-label="Year"
         />
+        {lensOn && <img className="era-emblem" src={`emblems/${era.id}.jpg`} alt="" />}
         <div className="yearread">
           <div className="yr">{lensOn ? fmtYear(year) : 'All time'}</div>
           <div className="eraname">{lensOn ? era.name : 'every era at once'}</div>

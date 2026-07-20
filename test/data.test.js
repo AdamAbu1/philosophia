@@ -115,6 +115,12 @@ describe('philosopher data schema', () => {
     expect(existsSync(join(process.cwd(), 'public', 'portraits/philosophia.jpg'))).toBe(true)
   })
 
+  it('every era has a scrubber emblem on disk', () => {
+    for (const e of ERAS) {
+      expect(existsSync(join(process.cwd(), 'public', `emblems/${e.id}.jpg`)), e.id).toBe(true)
+    }
+  })
+
   it('birth precedes death for closed lives', () => {
     for (const p of PHILOSOPHERS) {
       if (p.died != null) expect(p.born).toBeLessThan(p.died)
