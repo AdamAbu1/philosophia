@@ -217,4 +217,62 @@ export const WORK_LINKS = {
     'Naming and Necessity (1972/1980)': A('Naming_and_Necessity'),
     'Wittgenstein on Rules and Private Language (1982)': A('Wittgenstein_on_Rules_and_Private_Language'),
   },
+  confucius: {
+    'Analects (compiled by disciples, c. 475–221 BCE)': A('Analects'),
+  },
+  laozi: {
+    'Daodejing (Tao Te Ching)': A('Tao_Te_Ching'),
+  },
+  mozi: {
+    'Mozi (the book, compiled by his school)': A('Mozi_(book)'),
+  },
+  mencius: {
+    'Mencius (the book)': A('Mencius_(book)'),
+  },
+  zhuangzi: {
+    'Zhuangzi (the book, inner chapters c. 4th century BCE)': A('Zhuangzi_(book)'),
+  },
+  xunzi: {
+    'Xunzi (the book)': A('Xunzi_(book)'),
+  },
+  zhuxi: {
+    'Commentaries on the Four Books (1190)': A('Four_Books_and_Five_Classics'),
+  },
+  buddha: {
+    'Teachings preserved orally, written down in the Pali Canon (c. 1st century BCE)': A('Pali_Canon'),
+  },
+  mahavira: {
+    'Teachings preserved in the Jain Agamas': A('Jain_Agamas'),
+  },
+  nagarjuna: {
+    'Mūlamadhyamakakārikā (Fundamental Verses on the Middle Way)': A('M%C5%ABlamadhyamakak%C4%81rik%C4%81'),
+  },
+  shankara: {
+    'Brahmasutra Bhashya (commentary on the Brahma Sutras)': A('Brahma_Sutras'),
+    'Upadesasahasri (A Thousand Teachings)': A('Upadesasahasri'),
+  },
+  ramanuja: {
+    'Sri Bhashya (commentary on the Brahma Sutras)': A('Sri_Bhashya'),
+    'Vedarthasangraha': A('Vedarthasamgraha'),
+  },
+  avicenna: {
+    'The Book of Healing': A('The_Book_of_Healing'),
+    'The Canon of Medicine (1025)': A('The_Canon_of_Medicine'),
+  },
+  alghazali: {
+    'The Incoherence of the Philosophers (c. 1095)': A('The_Incoherence_of_the_Philosophers'),
+    'The Revival of the Religious Sciences': A('The_Revival_of_the_Religious_Sciences'),
+  },
+  averroes: {
+    'The Incoherence of the Incoherence (c. 1180)': A('The_Incoherence_of_the_Incoherence'),
+    'Decisive Treatise': A('The_Decisive_Treatise'),
+  },
+  ibnkhaldun: {
+    'Muqaddimah (1377)': A('Muqaddimah'),
+    'Kitab al-Ibar (universal history)': A('Kitab_al-Ibar'),
+  },
+  maimonides: {
+    'Mishneh Torah (1180)': A('Mishneh_Torah'),
+    'The Guide for the Perplexed (1190)': A('The_Guide_for_the_Perplexed'),
+  },
 }

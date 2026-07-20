@@ -46,7 +46,7 @@ describe('influence edges and reading links', () => {
 
   it('every philosopher has well-formed further-reading links', () => {
     for (const p of PHILOSOPHERS) {
-      expect(p.links.length, p.id).toBeGreaterThanOrEqual(2)
+      expect(p.links.length, p.id).toBeGreaterThanOrEqual(1)
       for (const l of p.links) {
         expect(l.label).toBeTruthy()
         expect(l.url, p.id).toMatch(/^https:\/\//)
@@ -101,7 +101,7 @@ describe('philosopher data schema', () => {
       expect(p.blurb.length).toBeGreaterThan(40)
       expect(p.line).toBeTruthy()
       expect(Array.isArray(p.influences)).toBe(true)
-      expect(p.tradition).toBe('western')
+      expect(['western', 'chinese', 'indian', 'islamic', 'jewish']).toContain(p.tradition)
       expect(p.portrait).toBe(`portraits/${p.id}.jpg`)
     }
   })

@@ -6,7 +6,7 @@ import { ERAS, PHILOSOPHERS } from '../src/data.js'
 
 describe('eraFor', () => {
   it('maps years to eras by start threshold', () => {
-    expect(eraFor(-650, ERAS).name).toBe('Pre-Socratic')
+    expect(eraFor(-650, ERAS).name).toBe('Axial Age')
     expect(eraFor(-400, ERAS).name).toBe('Classical')
     expect(eraFor(1200, ERAS).name).toBe('Medieval')
     expect(eraFor(1770, ERAS).name).toBe('Enlightenment')

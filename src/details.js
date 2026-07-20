@@ -501,4 +501,204 @@ export const DETAILS = {
     works: ['"A Completeness Theorem in Modal Logic" (1959)', 'Naming and Necessity (1972/1980)', 'Wittgenstein on Rules and Private Language (1982)', 'Philosophical Troubles (2011)'],
     legacy: 'Analytic metaphysics exists again because of him; debates about reference, essence, and consciousness still argue in his vocabulary.',
   },
+  confucius: {
+    bio: 'Born to a fallen aristocratic family in Qufu during the collapse of the Zhou order, Confucius spent years wandering between courts seeking a ruler who would govern by virtue, failed by his own reckoning, and taught instead. His students recorded his conversations; within centuries the Analects had shaped every East Asian institution.',
+    ideas: [
+      { title: 'Ren — humaneness', text: 'The highest excellence is cultivated benevolence: becoming fully human through how you treat others. Its measure is reciprocity — do not impose what you would not wish.' },
+      { title: 'Ritual as formation', text: 'Li — ceremony, manners, the forms of respect — is not empty show but the practice that trains feeling into virtue, as music trains the ear.' },
+      { title: 'Government by example', text: 'A ruler who is upright commands without orders; one who is not, orders without being obeyed. Legitimacy is moral before it is legal.' },
+    ],
+    works: ['Analects (compiled by disciples, c. 475–221 BCE)'],
+    legacy: 'Two and a half millennia of East Asian ethics, education, and statecraft trace to his classroom — arguably no one has taught more people how to live.',
+  },
+  laozi: {
+    bio: 'Tradition makes Laozi an archivist of the Zhou court who despaired of civilization, rode west on an ox, and wrote the Daodejing’s five thousand characters at the border keeper’s request before vanishing. Scholars doubt nearly every detail, including his existence — fittingly, for the philosopher of the unnameable.',
+    ideas: [
+      { title: 'The Dao', text: 'Beneath names and categories runs the Way — the source and pattern of everything, graspable only by those who stop grasping.' },
+      { title: 'Wu wei', text: 'Effortless action: the skillful life aligns with the grain of things rather than forcing them. Water, softest of all, defeats stone.' },
+      { title: 'The value of emptiness', text: 'A wheel works because of the hole at its hub; a vessel because of its hollow. What is not there does the work — a rebuke to every philosophy of accumulation.' },
+    ],
+    works: ['Daodejing (Tao Te Ching)'],
+    legacy: 'Daoism’s fountainhead and, after the Bible, perhaps the most translated book on earth — the permanent counter-voice to Confucian order.',
+  },
+  mozi: {
+    bio: 'A craftsman — likely a carpenter or fortification engineer — who rose from the artisan class, Mozi built a disciplined movement that raced between besieged cities to defend them, since defense served the people and aggression never did. For two centuries Mohism rivaled Confucianism, then vanished under the Qin.',
+    ideas: [
+      { title: 'Impartial care', text: 'The world’s harms come from partiality — my family, my state, first. Care for all impartially, he argued, and war and cruelty lose their root.' },
+      { title: 'The test of benefit', text: 'Judge every doctrine and ritual by whether it enriches the people, orders the state, and feeds the many — consequences over custom, two millennia before utilitarianism.' },
+      { title: 'Against fatalism and lavish ritual', text: 'Elaborate funerals and belief in fate paralyze effort; heaven’s will is known by what benefits the living.' },
+    ],
+    works: ['Mozi (the book, compiled by his school)'],
+    legacy: 'China’s road not taken: rediscovered in the twentieth century as the classical tradition’s scientist, logician, and consequentialist.',
+  },
+  mencius: {
+    bio: 'Raised by a mother whose devotion to his education became proverbial — she moved house three times to find the right neighborhood — Mencius carried Confucianism through the Warring States period, debating kings with a boldness that got him politely ignored. The Neo-Confucians later canonized him as the tradition’s second sage.',
+    ideas: [
+      { title: 'The four sprouts', text: 'Anyone who sees a child about to fall into a well feels alarm — proof that compassion, shame, deference, and judgment are innate sprouts, needing only cultivation to become full virtues.' },
+      { title: 'Human nature is good', text: 'Water can be splashed uphill, but it flows down by nature; people can be made bad, but goodness is their grain.' },
+      { title: 'The right of revolution', text: 'A king who savages his people has forfeited Heaven’s mandate and is no king — killing such a tyrant is not regicide but justice.' },
+    ],
+    works: ['Mencius (the book)'],
+    legacy: 'The optimistic wing of Confucian ethics; his mandate-of-heaven argument haunted every Chinese dynasty and still frames debates about legitimate rule.',
+  },
+  zhuangzi: {
+    bio: 'A minor official at a lacquer garden who refused the prime ministership of Chu — better, he said, to be a turtle dragging its tail in the mud than honored bones in a shrine. His book’s inner chapters are the most brilliant prose in classical Chinese: parables, jokes, talking animals, and vertigo.',
+    ideas: [
+      { title: 'The butterfly dream', text: 'He dreamt he was a butterfly, woke, and could not say which he was — a puzzle about knowledge and identity posed as a story, unanswerable by design.' },
+      { title: 'The equality of perspectives', text: 'Every judgment is made from somewhere: the cicada laughs at the giant bird. Categories are nets we throw over a world that owes them nothing.' },
+      { title: 'Free and easy wandering', text: 'The sage rides the transformations of things rather than resisting them — useful trees get cut down; the gnarled, useless one lives out its years.' },
+    ],
+    works: ['Zhuangzi (the book, inner chapters c. 4th century BCE)'],
+    legacy: 'Chan (Zen) Buddhism, Chinese poetry and painting, and every philosophy of perspective owe him; the West’s closest cousin is a funnier Heraclitus.',
+  },
+  xunzi: {
+    bio: 'The last great classical Confucian, Xunzi taught at the Jixia Academy — the ancient world’s greatest think tank — and lived to see the Warring States devour each other. Two of his students became architects of the Legalist Qin state, a fact held against him for two thousand years.',
+    ideas: [
+      { title: 'Human nature is crooked', text: 'Against Mencius: we are born with appetites that unchecked become strife. Goodness is artifice — the greatest of human inventions, like agriculture, and as unnatural.' },
+      { title: 'Ritual as technology', text: 'The sage-kings designed ritual the way engineers design dikes: to channel desire into forms that let everyone’s life go better.' },
+      { title: 'Heaven is just nature', text: 'The sky does not answer prayers or send omens; rain falls on the just and unjust. Order your own conduct and the state — that is the human portion.' },
+    ],
+    works: ['Xunzi (the book)'],
+    legacy: 'The realist wing of Confucianism and a startlingly modern naturalist; his student Han Fei turned the hard edges into Legalism.',
+  },
+  zhuxi: {
+    bio: 'A prodigy who passed the highest imperial examination at eighteen, Zhu Xi spent his life mostly declining office to teach, write, and rebuild the White Deer Grotto Academy. His synthesis was condemned as false learning in his lifetime — and made state orthodoxy, tested on every civil-service examination, within decades of his death.',
+    ideas: [
+      { title: 'Principle and vital force', text: 'Everything is li — pattern, principle — embodied in qi, vital stuff. The Great Ultimate is the principle of all principles, present whole in every thing, as the moon is mirrored in every river.' },
+      { title: 'The investigation of things', text: 'Knowledge grows by studying the principle in each thing and affair — books, rites, plants, government — until one dawn the patterns cohere.' },
+      { title: 'The examined heart-mind', text: 'Human nature is principle and thus good; selfish qi obscures it. Learning is polishing the mirror — reverent attention, quiet sitting, daily renewal.' },
+    ],
+    works: ['Commentaries on the Four Books (1190)', 'Reflections on Things at Hand (1175, with Lü Zuqian)'],
+    legacy: 'The most influential Chinese philosopher of the last millennium: his curriculum trained the elites of China, Korea, Japan, and Vietnam for six centuries.',
+  },
+  wangyangming: {
+    bio: 'Statesman, general who suppressed rebellions with armies he improvised, and philosopher who found enlightenment in exile at a postal relay station in Guizhou: the principle he had sought in bamboo for seven fruitless days was in the mind all along. He taught between campaigns; his sayings were compiled by disciples.',
+    ideas: [
+      { title: 'Mind is principle', text: 'Against Zhu Xi: the moral pattern is not out in things awaiting investigation — the heart-mind itself, when unobscured, is the principle. Look inward, not into bamboo.' },
+      { title: 'The unity of knowledge and action', text: 'To know filial piety and not practice it is not yet to know it. Knowledge is the beginning of action; action, the completion of knowledge.' },
+      { title: 'Innate moral knowing', text: 'Everyone possesses liangzhi — spontaneous good knowing, prior to study. The sage differs from the commoner only in never letting it be smothered.' },
+    ],
+    works: ['Instructions for Practical Living (Chuanxilu, compiled 1518–1527)'],
+    legacy: 'The great heretic of Neo-Confucianism; his activist idealism fired reformers from Tokugawa Japan to twentieth-century China.',
+  },
+  buddha: {
+    bio: 'Siddhartha Gautama was born a prince at Lumbini and, tradition says, shielded from all suffering until four sights — an old man, a sick man, a corpse, a renunciant — broke the spell. Six years of asceticism failed; a night of meditation under the Bodhi tree did not. He taught for forty-five years across the Gangetic plain and died at eighty, telling his monks to be lamps unto themselves.',
+    ideas: [
+      { title: 'The Four Noble Truths', text: 'Existence involves suffering; suffering arises from craving; craving can be extinguished; the Eightfold Path — right view through right concentration — is the way to its end.' },
+      { title: 'No-self', text: 'Search the body and mind and you find processes, not an owner: the "self" is a bundle of changing aggregates, and clinging to it is the deepest root of suffering.' },
+      { title: 'Dependent origination', text: 'Nothing arises alone; everything comes to be conditioned by something else. The middle way between "it exists" and "it does not" — later Buddhism’s deepest mine.' },
+    ],
+    works: ['Teachings preserved orally, written down in the Pali Canon (c. 1st century BCE)'],
+    legacy: 'Founder of a 2,500-year tradition spanning half of Asia — and of a psychology of craving and attention that secular therapy is still rediscovering.',
+  },
+  mahavira: {
+    bio: 'An elder contemporary of the Buddha born near Vaishali, Mahavira renounced his princely house at thirty, wandered naked and possessionless for twelve years of extreme austerity, and attained omniscience by Jain account. He organized an ancient path into the Jain community that survives unbroken today.',
+    ideas: [
+      { title: 'Ahimsa', text: 'Absolute nonviolence toward every being that breathes — human, animal, insect — as the first and highest duty; Jain monks still sweep the path before their feet.' },
+      { title: 'Many-sidedness', text: 'Anekantavada: reality is many-sided and every assertion true only from a standpoint — the blind men and the elephant is a Jain parable of epistemic humility.' },
+      { title: 'Karma as substance', text: 'Karma is fine matter that adheres to the soul through action; liberation is burning off the accumulation through discipline until the soul rises weightless.' },
+    ],
+    works: ['Teachings preserved in the Jain Agamas'],
+    legacy: 'The most rigorous ethics of nonviolence ever practiced — Gandhi absorbed ahimsa from Jain neighbors, and through him it reshaped the twentieth century.',
+  },
+  nagarjuna: {
+    bio: 'Almost nothing certain is known of the man — a South Indian monk of the second century, later abbot of Nalanda by legend — but the Mūlamadhyamakakārikā is the sharpest blade in Buddhist philosophy. Every school after him, in India, Tibet, China, and Japan, positioned itself relative to his emptiness.',
+    ideas: [
+      { title: 'Emptiness', text: 'Nothing possesses svabhava — own-being, independent essence. Things exist the way a chariot does: as dependent assemblies, real enough to function, empty of core.' },
+      { title: 'The tetralemma', text: 'For every metaphysical thesis he refutes all four corners — is, is not, both, neither — not to install a rival view but to exhaust the craving for views.' },
+      { title: 'Two truths', text: 'Conventional truth (chariots, persons, karma) and ultimate truth (emptiness) — and the crucial move: emptiness itself is empty, so nirvana and samsara do not differ in nature.' },
+    ],
+    works: ['Mūlamadhyamakakārikā (Fundamental Verses on the Middle Way)'],
+    legacy: 'Buddhism’s second Buddha by reputation; his dialectic reads uncannily like deconstruction eighteen centuries early, and Tibetan philosophy is largely commentary on him.',
+  },
+  shankara: {
+    bio: 'Born in Kerala and dead by thirty-two, Shankara took monastic vows as a boy, walked the length of India several times, defeated rivals in public debate, wrote the tradition’s definitive commentaries, and founded four monasteries at the subcontinent’s corners that still operate. Hindu tradition ranks no philosopher higher.',
+    ideas: [
+      { title: 'Non-dualism', text: 'Brahman — the absolute — alone is real, and atman, the innermost self, is identical with it: tat tvam asi, "you are that." Multiplicity is misperception.' },
+      { title: 'Maya and superimposition', text: 'The world of difference is like a rope mistaken for a snake at dusk: not nothing, but not what it seems — appearance superimposed on the real by ignorance.' },
+      { title: 'Liberation by knowledge', text: 'Since bondage is a mistake, freedom comes not from works or even devotion but from knowledge — the direct realization that the self was never bound.' },
+    ],
+    works: ['Brahmasutra Bhashya (commentary on the Brahma Sutras)', 'Upadesasahasri (A Thousand Teachings)'],
+    legacy: 'Advaita Vedānta became Hinduism’s most prestigious philosophy and, through Vivekananda, the face it showed the modern West.',
+  },
+  ramanuja: {
+    bio: 'A Tamil Brahmin whose teacher, sensing heterodoxy, allegedly tried three times to be rid of him, Ramanuja became the great theologian of the Sri Vaishnava community at Srirangam — tradition credits him with 120 years. Where Shankara’s absolute was impersonal, Ramanuja’s was a God you could love.',
+    ideas: [
+      { title: 'Qualified non-dualism', text: 'The world and souls are real, not illusion — they are the body of Brahman, who is their inner self. Unity with difference, against Shankara’s unity instead of it.' },
+      { title: 'Devotion as the path', text: 'Liberation comes through bhakti — loving surrender to a personal God — not through bare knowledge; philosophy exists to make love intelligible.' },
+      { title: 'God with attributes', text: 'A Brahman without qualities cannot be worshipped, known, or gracious. The absolute is supremely personal: all-merciful, all-beautiful, accessible.' },
+    ],
+    works: ['Sri Bhashya (commentary on the Brahma Sutras)', 'Vedarthasangraha'],
+    legacy: 'The philosopher of Hindu devotionalism: the bhakti movements that shaped popular Hinduism for a millennium stand on his arguments.',
+  },
+  alkindi: {
+    bio: 'Born to the governor of Kufa and educated in Baghdad, Al-Kindi led the circle translating Aristotle, Euclid, and Ptolemy into Arabic at the House of Wisdom, wrote some 260 treatises from optics to cryptography, and endured the confiscation of his library in a court intrigue. He is remembered as the first philosopher of the Arabic tradition.',
+    ideas: [
+      { title: 'Truth has no nationality', text: 'We should never be ashamed to accept truth from whatever source — even foreign peoples and past ages. The manifesto of the translation movement.' },
+      { title: 'Philosophy in service of faith', text: 'Reason and revelation both come from God and teach one truth; philosophy demonstrates what prophecy announces.' },
+      { title: 'The eternity question', text: 'Against Aristotle he argued the world cannot be eternal — an actual infinite past is impossible — an argument that traveled through the centuries into Kant’s antinomies.' },
+    ],
+    works: ['On First Philosophy', 'On the Intellect'],
+    legacy: 'Opened the door through which Greek philosophy entered Arabic — and thus, three centuries later, returned to Europe.',
+  },
+  alfarabi: {
+    bio: 'Born on the Central Asian frontier and trained in Baghdad by Christian Aristotelians, Al-Farabi lived simply — legend has him a night watchman in a garden, writing by lamplight — and earned the title "Second Teacher," second only to Aristotle. His harmonization of Plato and Aristotle set the agenda for everyone after.',
+    ideas: [
+      { title: 'The virtuous city', text: 'Plato’s Republic rethought for a prophetic religion: the ideal ruler unites philosopher and lawgiver, and cities are ranked by the truth of what their citizens believe about happiness.' },
+      { title: 'Religion as philosophy’s image', text: 'Religion presents in symbols and stories, for everyone, the same truths philosophy demonstrates for the few — neither is dispensable.' },
+      { title: 'The hierarchy of intellect', text: 'From the First Cause emanate the intelligences of the spheres down to the Active Intellect, from which human minds receive their light — the cosmology Avicenna and Maimonides inherited.' },
+    ],
+    works: ['The Virtuous City', 'The Attainment of Happiness'],
+    legacy: 'The architect of Islamic political philosophy; Avicenna said he only understood Aristotle’s Metaphysics after finding Al-Farabi’s little treatise on its aims.',
+  },
+  avicenna: {
+    bio: 'A Persian prodigy who had memorized the Quran by ten and mastered medicine by sixteen, Avicenna wrote through a life of court intrigue, imprisonment, and flight — often composing at night after a day of vizier’s work. His Canon of Medicine taught European doctors for six hundred years; his metaphysics taught their theologians.',
+    ideas: [
+      { title: 'Essence and existence', text: 'What a thing is and that it is are distinct; in everything but God, existence is received. God alone is the Necessary Existent, whose essence is to be.' },
+      { title: 'The floating man', text: 'Imagine yourself created adult, suspended in void, senseless — you would still affirm "I am." Self-awareness is immediate and immaterial: an argument Descartes echoed six centuries on.' },
+      { title: 'Proof from contingency', text: 'Contingent things borrow existence; a chain of borrowers cannot run forever without a lender — there must be something necessary in itself.' },
+    ],
+    works: ['The Book of Healing', 'The Canon of Medicine (1025)', 'Remarks and Admonitions'],
+    legacy: 'The greatest philosopher of the Islamic world by common consent: Aquinas’s metaphysics of being and centuries of European medicine both run on Avicennian rails.',
+  },
+  alghazali: {
+    bio: 'At thirty-three, Al-Ghazali held the most prestigious chair in Baghdad; at thirty-seven, a crisis of certainty broke his health, and he walked away from position, wealth, and name to wander a decade as a Sufi. His autobiography, Deliverance from Error, reads like Descartes avant la lettre — doubt pushed to the foundations, then rebuilt on experience of God.',
+    ideas: [
+      { title: 'The incoherence of the philosophers', text: 'Twenty theses of the falasifa examined and three condemned — an eternal world, God ignorant of particulars, no bodily resurrection — using philosophy’s own logic against its pretensions.' },
+      { title: 'Occasionalism', text: 'Fire does not burn cotton; God creates the burning at the fire’s presence, by habit not necessity. Causation is custom — Hume’s problem, posed six centuries before Hume.' },
+      { title: 'Knowledge by tasting', text: 'Beyond doctrine stands dhawq — direct experiential knowledge of the divine, won by the purified heart; theology describes water, the Sufi drinks.' },
+    ],
+    works: ['The Incoherence of the Philosophers (c. 1095)', 'The Revival of the Religious Sciences', 'Deliverance from Error'],
+    legacy: 'Redirected Islamic civilization toward Sufi-inflected orthodoxy, and his causal skepticism reads today like Hume with a minaret.',
+  },
+  averroes: {
+    bio: 'Judge of Seville and Córdoba, court physician, and scion of three generations of jurists, Averroes was commissioned by the Almohad caliph to explain Aristotle — and produced commentaries so thorough that Europe called him simply "the Commentator." He died in Marrakesh in 1198 after a late fall from favor; within decades his books were setting Paris on fire.',
+    ideas: [
+      { title: 'The incoherence of the Incoherence', text: 'His point-by-point reply to Al-Ghazali: to deny natural causation is to deny knowledge itself, for to know a thing is to know it through its causes.' },
+      { title: 'One truth, two languages', text: 'The Decisive Treatise argues law itself obliges the capable to philosophize; demonstration for the few and rhetoric for the many teach one truth in different registers.' },
+      { title: 'The unity of intellect', text: 'The material intellect is one for all humanity — individual minds share it as one light through many windows — the thesis Aquinas spent a treatise refuting.' },
+    ],
+    works: ['The Incoherence of the Incoherence (c. 1180)', 'Decisive Treatise', 'Long Commentaries on Aristotle'],
+    legacy: 'Latin Averroism forced Christian Europe to reckon with autonomous reason; Aquinas is unthinkable without the Commentator to build on and against.',
+  },
+  ibnkhaldun: {
+    bio: 'A Tunis-born diplomat who served and betrayed half the courts of North Africa and Spain, was jailed, shipwrecked, and widowed by plague, Ibn Khaldun retreated to a desert fortress in 1375 and wrote the Muqaddimah — the introduction to a history of the world that founded a science no one had imagined. He ended as Cairo’s chief judge, and once negotiated with Tamerlane outside Damascus.',
+    ideas: [
+      { title: 'Asabiyyah', text: 'Group solidarity is the engine of power: hardy peripheries cohere, conquer soft centers, luxuriate, dissolve — and are conquered in turn, in a cycle of roughly four generations.' },
+      { title: 'A science of civilization', text: 'History’s reports must be tested against the laws of social organization — economics, geography, group psychology — not just chains of transmission: historiography becomes social science.' },
+      { title: 'Economics before economics', text: 'Prices, taxes, and specialization follow patterns: excessive taxation kills the revenue it seeks — an argument twentieth-century economists rediscovered and named after themselves.' },
+    ],
+    works: ['Muqaddimah (1377)', 'Kitab al-Ibar (universal history)'],
+    legacy: 'Sociology, historiography, and economics each claim him as an ancestor; no medieval mind anywhere looks more modern.',
+  },
+  maimonides: {
+    bio: 'Born in Córdoba and driven across the Mediterranean by the Almohad persecutions, Maimonides settled in Cairo as physician to Saladin’s vizier, leading the Jewish community by day and answering the world’s queries by night — he complained he barely had time to be ill. His codification of Jewish law and his philosophy each would have made a lesser man immortal.',
+    ideas: [
+      { title: 'Negative theology', text: 'God’s essence exceeds every predicate: to say God is wise is only to deny ignorance. We speak most truly of God by unsaying — a discipline against idolatry of the mind.' },
+      { title: 'Torah and Aristotle', text: 'Scripture read rightly and reason argued rightly cannot conflict; where the letter clashes with demonstration, the letter is parable. The Guide teaches the perplexed to hold both.' },
+      { title: 'The welfare of body and soul', text: 'Divine law aims at two perfections — social order for the body politic, true opinions for the soul — and every commandment serves one or both.' },
+    ],
+    works: ['Mishneh Torah (1180)', 'The Guide for the Perplexed (1190)'],
+    legacy: '"From Moses to Moses there arose none like Moses": Jewish thought is divided by him, and Aquinas cites "Rabbi Moses" as a master.',
+  },
 }
