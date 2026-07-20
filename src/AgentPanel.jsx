@@ -171,6 +171,11 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
     <section className="agent" aria-label="Ask Philosophia">
       <div className="agent-frame">
         <div className="agent-head">
+          <img
+            className="agent-medallion"
+            src={persona ? persona.thumb : 'portraits/philosophia.jpg'}
+            alt={persona ? `Engraved portrait of ${persona.name}` : 'Lady Philosophia, engraved'}
+          />
           <h2>ASK PHILOSOPHIA</h2>
           {persona ? (
             <span className="agent-mode">

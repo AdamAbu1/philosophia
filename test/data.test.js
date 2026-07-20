@@ -111,6 +111,8 @@ describe('philosopher data schema', () => {
       expect(existsSync(join(process.cwd(), 'public', p.portrait)), p.id).toBe(true)
       expect(existsSync(join(process.cwd(), 'public', p.thumb)), `${p.id} thumb`).toBe(true)
     }
+    // the agent's guide medallion (Lady Philosophia) ships with the portrait set
+    expect(existsSync(join(process.cwd(), 'public', 'portraits/philosophia.jpg'))).toBe(true)
   })
 
   it('birth precedes death for closed lives', () => {

@@ -226,3 +226,8 @@ canvas.globe:active { cursor: grabbing; }
 }
 .converse:hover { background: rgba(74, 66, 55, .08); }
 @media (max-width: 900px) { .agent-tools { margin-left: 0; } }
+.agent-medallion {
+  width: 46px; height: 46px; border-radius: 50%; object-fit: cover; object-position: top;
+  border: 1px solid var(--ink-soft); box-shadow: 0 0 0 3px var(--paper), 0 0 0 4px var(--rule);
+  align-self: center; margin-right: 4px;
+}
