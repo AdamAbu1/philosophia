@@ -78,3 +78,27 @@ describe('place data', () => {
     }
   })
 })
+
+describe('constellation helpers', () => {
+  it('influenceEdges lists one edge per influence, all valid ids', async () => {
+    const { influenceEdges } = await import('../src/geo.js')
+    const { byId } = await import('../src/data.js')
+    const edges = influenceEdges(PHILOSOPHERS)
+    const expected = PHILOSOPHERS.reduce((n, p) => n + p.influences.length, 0)
+    expect(edges).toHaveLength(expected)
+    expect(expected).toBeGreaterThan(80)
+    for (const [a, b] of edges) {
+      expect(byId[a], a).toBeTruthy()
+      expect(byId[b], b).toBeTruthy()
+    }
+  })
+  it('starTier maps degree to magnitude', async () => {
+    const { starTier } = await import('../src/geo.js')
+    expect(starTier(0)).toBe(1)
+    expect(starTier(3)).toBe(1)
+    expect(starTier(4)).toBe(2)
+    expect(starTier(7)).toBe(2)
+    expect(starTier(8)).toBe(3)
+    expect(starTier(15)).toBe(3)
+  })
+})

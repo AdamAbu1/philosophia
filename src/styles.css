@@ -345,3 +345,4 @@ canvas.globe:active { cursor: grabbing; }
   cursor: pointer; padding: 0;
 }
 .daily-x:hover { color: var(--ink); }
+.zoomctl button.conston { background: rgba(74, 66, 55, .16); color: var(--ink); border-color: var(--ink); }

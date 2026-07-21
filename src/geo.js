@@ -42,3 +42,10 @@ export function displayCoords(philosophers) {
 export function yearForSelection(p, year) {
   return year < p.born ? (p.died ?? YEAR_MAX) : year
 }
+
+// Constellation mode: the full influence web and star magnitudes.
+export const influenceEdges = philosophers =>
+  philosophers.flatMap(p => p.influences.map(from => [from, p.id]))
+
+// Degree → magnitude tier: 3 = hub with chart rays, 2 = notable, 1 = point.
+export const starTier = degree => (degree >= 8 ? 3 : degree >= 4 ? 2 : 1)

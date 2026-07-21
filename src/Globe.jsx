@@ -6,6 +6,7 @@ import world from './assets/land-110m.json'
 import { ERAS, PHILOSOPHERS, byId } from './data.js'
 import {
   YEAR_MIN, YEAR_MAX, eraFor, fmtYear, isFrontside, displayCoords, yearForSelection,
+  influenceEdges, starTier,
 } from './geo.js'
 
 const W = 900
@@ -16,6 +17,10 @@ const CY = H / 2
 const LAND = feature(world, world.objects.land)
 const GRATICULE = geoGraticule10()
 const COORDS = displayCoords(PHILOSOPHERS)
+const ALL_EDGES = influenceEdges(PHILOSOPHERS)
+const DEGREE = Object.fromEntries(
+  PHILOSOPHERS.map(p => [p.id, p.influences.length + p.influenced.length]),
+)
 const LABEL_BELOW = Object.fromEntries(PHILOSOPHERS.map((p, i) => [p.id, i % 2 === 1]))
 const clampZoom = z => Math.max(1, Math.min(8, z))
 
@@ -81,6 +86,7 @@ export default function Globe({ selectedId, onSelect, itinerary }) {
   const [year, setYear] = useState(YEAR_MIN)
   const [lensOn, setLensOn] = useState(false)
   const [playing, setPlaying] = useState(false)
+  const [constellation, setConstellation] = useState(false)
 
   const canvasRef = useRef(null)
   const rotationRef = useRef([-22, -40])
@@ -104,6 +110,8 @@ export default function Globe({ selectedId, onSelect, itinerary }) {
   selectedRef.current = selectedId
   const itineraryRef = useRef(null)
   itineraryRef.current = itinerary
+  const constRef = useRef(false)
+  constRef.current = constellation
 
   function draw() {
     const canvas = canvasRef.current
@@ -145,7 +153,9 @@ export default function Globe({ selectedId, onSelect, itinerary }) {
     ctx.stroke()
     ctx.setLineDash([])
 
-    // land: stippled fill + ink coast
+    // land: stippled fill + ink coast (a ghost of itself under the heavens)
+    const cons = constRef.current
+    ctx.globalAlpha = cons ? 0.22 : 1
     ctx.beginPath()
     path(LAND)
     ctx.fillStyle = landPattern
@@ -153,6 +163,18 @@ export default function Globe({ selectedId, onSelect, itinerary }) {
     ctx.strokeStyle = INK_LAND
     ctx.lineWidth = 0.7
     ctx.stroke()
+    ctx.globalAlpha = 1
+
+    // constellation: the entire influence web at once, faint ink
+    if (cons) {
+      ctx.beginPath()
+      for (const [a, b] of ALL_EDGES) {
+        path({ type: 'LineString', coordinates: [COORDS[a], COORDS[b]] })
+      }
+      ctx.strokeStyle = 'rgba(43,38,32,.26)'
+      ctx.lineWidth = 0.55
+      ctx.stroke()
+    }
 
     // itinerary route: a dotted expedition line through the stops in order —
     // visited stops filled, upcoming stops open rings.
@@ -194,8 +216,10 @@ export default function Globe({ selectedId, onSelect, itinerary }) {
         ctx.beginPath()
         path({ type: 'LineString', coordinates: [from, COORDS[otherId]] })
         ctx.setLineDash(dashed ? [4, 3] : [])
-        ctx.strokeStyle = dashed ? 'rgba(43,38,32,.5)' : 'rgba(43,38,32,.68)'
-        ctx.lineWidth = dashed ? 1 : 1.2
+        ctx.strokeStyle = dashed
+          ? `rgba(43,38,32,${cons ? 0.75 : 0.5})`
+          : `rgba(43,38,32,${cons ? 0.9 : 0.68})`
+        ctx.lineWidth = dashed ? (cons ? 1.2 : 1) : (cons ? 1.5 : 1.2)
         ctx.stroke()
       }
       for (const id of selPhil.influences) arc(id, true)
@@ -206,7 +230,7 @@ export default function Globe({ selectedId, onSelect, itinerary }) {
     // points
     const lens = lensRef.current
     const yr = yearRef.current
-    const medallions = zoom >= 3
+    const medallions = zoom >= 3 && !cons
     const hits = []
     ctx.textAlign = 'center'
     for (const p of PHILOSOPHERS) {
@@ -262,6 +286,24 @@ export default function Globe({ selectedId, onSelect, itinerary }) {
         } else {
           ctx.strokeStyle = FADE
           ctx.lineWidth = 1
+          ctx.stroke()
+        }
+      } else if (cons) {
+        // stars: magnitude by influence degree, hubs get chart rays
+        const tier = starTier(DEGREE[p.id])
+        const r = tier === 3 ? 3.2 : tier === 2 ? 2.4 : 1.7
+        ctx.beginPath()
+        ctx.arc(px, py, r, 0, 7)
+        ctx.fillStyle = 'rgba(43,38,32,.9)'
+        ctx.fill()
+        if (tier === 3) {
+          ctx.strokeStyle = 'rgba(43,38,32,.55)'
+          ctx.lineWidth = 0.5
+          ctx.beginPath()
+          ctx.moveTo(px - r - 5.5, py)
+          ctx.lineTo(px + r + 5.5, py)
+          ctx.moveTo(px, py - r - 5.5)
+          ctx.lineTo(px, py + r + 5.5)
           ctx.stroke()
         }
       } else {
@@ -538,6 +580,18 @@ export default function Globe({ selectedId, onSelect, itinerary }) {
             aria-label="Reset zoom"
           >
             ◦
+          </button>
+          <button
+            className={constellation ? 'conston' : ''}
+            onClick={() => {
+              spinRef.current = false
+              setConstellation(c => !c)
+            }}
+            aria-label="Constellation mode"
+            aria-pressed={constellation}
+            title="the heavens of thought — every influence at once"
+          >
+            ✳
           </button>
         </div>
       </div>
