@@ -6,6 +6,7 @@ import {
   voiceProfileFor,
   isFemaleVoice,
   elevenVoiceFor,
+  accentPool,
   VOICE_REGISTER,
 } from '../src/voice.js'
 
@@ -127,6 +128,47 @@ describe('voice casting', () => {
   it('falls back to any age when the library has no aged voices', () => {
     const voices = [{ voice_id: 'd1', labels: { gender: 'male', age: 'young' } }]
     expect(elevenVoiceFor('socrates', voices).voice_id).toBe('d1')
+  })
+
+  it('canon Americans lock to American voices', () => {
+    const voices = [
+      { voice_id: 'e1', labels: { gender: 'male', age: 'middle_aged', accent: 'british' } },
+      { voice_id: 'e2', labels: { gender: 'male', age: 'middle_aged', accent: 'american' } },
+    ]
+    expect(elevenVoiceFor('searle', voices).voice_id).toBe('e2')
+  })
+
+  it('British Isles thinkers pin British accents even from a tiny bench', () => {
+    const voices = [
+      { voice_id: 'f1', labels: { gender: 'male', age: 'middle_aged', accent: 'american' } },
+      { voice_id: 'f2', labels: { gender: 'male', age: 'middle_aged', accent: 'british' } },
+    ]
+    expect(elevenVoiceFor('hume', voices).voice_id).toBe('f2')
+  })
+
+  it('tradition accents match when the library offers them', () => {
+    const voices = [
+      { voice_id: 'g1', labels: { gender: 'male', age: 'old', accent: 'american' } },
+      { voice_id: 'g2', labels: { gender: 'male', age: 'old', accent: 'chinese' } },
+    ]
+    expect(elevenVoiceFor('confucius', voices).voice_id).toBe('g2')
+  })
+
+  it('old-world non-American preference needs a bench of three', () => {
+    const am = a => ({ voice_id: a, labels: { gender: 'male', age: 'old', accent: 'american' } })
+    const br = a => ({ voice_id: a, labels: { gender: 'male', age: 'old', accent: 'british' } })
+    const thin = [am('h1'), am('h2'), br('h3'), br('h4')]
+    expect(accentPool('socrates', thin)).toEqual(thin) // 2 accented — guard holds
+    const rich = [am('h1'), br('h3'), br('h4'), br('h5')]
+    expect(accentPool('socrates', rich).every(v => v.labels.accent === 'british')).toBe(true)
+  })
+
+  it('the guide is placeless — accent never narrows her pool', () => {
+    const voices = [
+      { voice_id: 'i1', labels: { gender: 'female', accent: 'british' } },
+      { voice_id: 'i2', labels: { gender: 'female', accent: 'american' } },
+    ]
+    expect(accentPool(null, voices)).toEqual(voices)
   })
 })
 

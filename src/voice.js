@@ -101,6 +101,49 @@ const AGE_PREF = {
 }
 const agePrefFor = id => (id == null ? null : AGE_PREF[byId[id]?.era] ?? null)
 
+// Accent casting. Nationality pins first: the canon's Americans should sound
+// American and its British Isles thinkers British. Non-western traditions
+// match accents when the library offers them. Every other old-world thinker
+// prefers non-American voices — but only once the library holds at least
+// MIN_ACCENT_BENCH of them, so a default (US-heavy) library doesn't collapse
+// the whole ancient world onto two British narrators.
+const AMERICAN_IDS = new Set(['james', 'peirce', 'quine', 'rawls', 'searle', 'kripke'])
+const BRITISH_IDS = new Set([
+  'bacon', 'hobbes', 'locke', 'berkeley', 'hume', 'bentham', 'mill',
+  'russell', 'wollstonecraft', 'anscombe',
+])
+const BRITISH_ACCENTS = ['british', 'english', 'scottish', 'irish', 'welsh', 'australian']
+const TRADITION_ACCENTS = {
+  chinese: ['chinese'],
+  indian: ['indian'],
+  islamic: ['arabic', 'persian', 'turkish', 'egyptian'],
+  jewish: ['hebrew', 'israeli'],
+  japanese: ['japanese'],
+  african: ['african', 'nigerian', 'ethiopian'],
+}
+const MIN_ACCENT_BENCH = 3
+
+// Exported for tests. Narrows a (gender/age-filtered) pool by accent.
+export function accentPool(id, pool) {
+  const accent = v => (v.labels?.accent ?? '').toLowerCase()
+  if (id && AMERICAN_IDS.has(id)) {
+    const m = pool.filter(v => accent(v) === 'american')
+    return m.length ? m : pool
+  }
+  if (id && BRITISH_IDS.has(id)) {
+    const m = pool.filter(v => BRITISH_ACCENTS.some(a => accent(v).includes(a)))
+    return m.length ? m : pool
+  }
+  if (id == null) return pool // the guide is placeless
+  const tradition = TRADITION_ACCENTS[byId[id]?.tradition]
+  if (tradition) {
+    const m = pool.filter(v => tradition.some(a => accent(v).includes(a)))
+    if (m.length) return m
+  }
+  const m = pool.filter(v => accent(v) && accent(v) !== 'american')
+  return m.length >= MIN_ACCENT_BENCH ? m : pool
+}
+
 // ElevenLabs: pick a voice deterministically from the account's library,
 // gender-matched and era-age-matched, stable across sessions (sorted by
 // voice_id). Age narrows the pool only when the library can satisfy it.
@@ -116,6 +159,7 @@ export function elevenVoiceFor(id, voices) {
     const aged = pool.filter(v => pref.includes((v.labels?.age ?? '').toLowerCase()))
     if (aged.length) pool = aged
   }
+  pool = accentPool(id, pool)
   pool = pool.slice().sort((a, b) => a.voice_id.localeCompare(b.voice_id))
   if (!pool.length) return null
   return pool[hash(id ?? 'philosophia') % pool.length]
