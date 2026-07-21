@@ -24,6 +24,7 @@ import {
   streamReply,
 } from './agent.js'
 import { LIVING, livingSrc } from './living.js'
+import { sessionFromMessages, renderBroadsheet, transcriptText, tweetUrl } from './broadsheet.js'
 import {
   voiceSupport,
   makeSpeaker,
@@ -106,6 +107,9 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
   const [symp, setSymp] = useState(null) // {a, b} while a symposium sits
   const [sympSetup, setSympSetup] = useState(false)
   const [sympDraft, setSympDraft] = useState({ a: 'socrates', b: 'nietzsche', q: '' })
+  const [shareMenu, setShareMenu] = useState(null)
+  const [publishing, setPublishing] = useState(false)
+  const tapeRef = useRef([]) // mp3 blobs of a voiced symposium, in play order
 
   const streamRef = useRef(null)
   const speakerRef = useRef(null)
@@ -131,6 +135,16 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
     setListening(false)
   }
 
+  const closeShareMenu = () => {
+    setShareMenu(menu => {
+      if (menu) {
+        URL.revokeObjectURL(menu.pngUrl)
+        if (menu.mp3Url) URL.revokeObjectURL(menu.mp3Url)
+      }
+      return null
+    })
+  }
+
   // Entering or leaving a persona resets the panel — including any symposium.
   useEffect(() => {
     streamRef.current?.abort()
@@ -139,6 +153,8 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
     setSympSetup(false)
     setMessages([])
     setError(null)
+    tapeRef.current = []
+    closeShareMenu()
   }, [personaId])
 
   useEffect(
@@ -188,6 +204,8 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
     setSympSetup(false)
     setMessages([])
     setError(null)
+    tapeRef.current = []
+    closeShareMenu()
   }
 
   const stopAll = () => {
@@ -250,7 +268,7 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
 
   // Streams one reply. `speakerId` labels symposium turns (null = guide or
   // persona); `system`/`apiMessages` are fully built by the caller.
-  const runStream = async ({ system, apiMessages, speakerId, voicePersona, autoListen }) => {
+  const runStream = async ({ system, apiMessages, speakerId, voicePersona, autoListen, onClip }) => {
     setMessages(ms => [
       ...ms,
       { role: 'assistant', text: '', blocks: null, streaming: true, speakerId },
@@ -270,6 +288,7 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
           if (autoListen && voiceOnRef.current && !busyRef.current && support.stt) startListening()
         },
         onError: () => setError('Character voices unavailable — using system voices.'),
+        onClip,
       })
       speakerRef.current = speaker
     }
@@ -415,7 +434,44 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
       speakerId,
       voicePersona: speakerId,
       autoListen: false,
+      onClip: b => tapeRef.current.push(b),
     })
+  }
+
+  const publish = async () => {
+    const s = sympRef.current
+    if (!s || publishing) return
+    setPublishing(true)
+    try {
+      const session = sessionFromMessages(messagesRef.current, s)
+      const pngBlob = await renderBroadsheet(session)
+      const files = [new File([pngBlob], 'symposium.png', { type: 'image/png' })]
+      let mp3Blob = null
+      if (tapeRef.current.length) {
+        mp3Blob = new Blob(tapeRef.current, { type: 'audio/mpeg' })
+        files.push(new File([mp3Blob], 'symposium.mp3', { type: 'audio/mpeg' }))
+      }
+      const payload = {
+        files,
+        title: 'A symposium in Philosophia',
+        text: `“${session.question}” — ${byId[s.a].name} & ${byId[s.b].name}`,
+      }
+      if (navigator.canShare?.(payload)) {
+        await navigator.share(payload)
+      } else {
+        closeShareMenu()
+        setShareMenu({
+          pngUrl: URL.createObjectURL(pngBlob),
+          mp3Url: mp3Blob ? URL.createObjectURL(mp3Blob) : null,
+          transcript: transcriptText(session),
+          tweet: tweetUrl(session),
+        })
+      }
+    } catch (err) {
+      if (err?.name !== 'AbortError') setError(err?.message ?? 'Could not publish the proceedings.')
+    } finally {
+      setPublishing(false)
+    }
   }
 
   const convene = e => {
@@ -512,6 +568,11 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
             {!showForm && !symp && !sympSetup && (
               <button className="agent-link" onClick={openSetup}>
                 symposium
+              </button>
+            )}
+            {symp && messages.some(m => m.role === 'assistant' && m.text && !m.streaming) && (
+              <button className="agent-link" onClick={publish} disabled={publishing}>
+                {publishing ? 'publishing…' : 'publish'}
               </button>
             )}
             {keyed && !showKeyForm && (
@@ -674,6 +735,37 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
                     ),
                   )}
                 </div>
+              )}
+              {shareMenu && (
+                <p className="share-menu">
+                  the proceedings are ready —{' '}
+                  <a className="agent-link" href={shareMenu.pngUrl} download="symposium.png">
+                    download broadsheet
+                  </a>
+                  {shareMenu.mp3Url && (
+                    <>
+                      {' · '}
+                      <a className="agent-link" href={shareMenu.mp3Url} download="symposium.mp3">
+                        download audio
+                      </a>
+                    </>
+                  )}
+                  {' · '}
+                  <button
+                    className="agent-link"
+                    onClick={() => navigator.clipboard?.writeText(shareMenu.transcript)}
+                  >
+                    copy transcript
+                  </button>
+                  {' · '}
+                  <a className="agent-link" href={shareMenu.tweet} target="_blank" rel="noopener noreferrer">
+                    compose tweet
+                  </a>
+                  {' · '}
+                  <button className="agent-link" onClick={closeShareMenu}>
+                    ✕
+                  </button>
+                </p>
               )}
               {error && <p className="agent-error">{error}</p>}
               <form

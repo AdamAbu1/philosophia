@@ -202,12 +202,13 @@ class SystemSpeaker {
 // directly from the browser). Sentences are fetched in order and played
 // back-to-back; the next clip downloads while the current one plays.
 class ElevenSpeaker {
-  constructor(apiKey, voiceId, { onStart, onIdle, onError } = {}) {
+  constructor(apiKey, voiceId, { onStart, onIdle, onError, onClip } = {}) {
     this.apiKey = apiKey
     this.voiceId = voiceId
     this.onStart = onStart
     this.onIdle = onIdle
     this.onError = onError
+    this.onClip = onClip // receives each mp3 blob in play order (the tape)
     this.queue = Promise.resolve()
     this.pending = 0
     this.stopped = false
@@ -224,7 +225,7 @@ class ElevenSpeaker {
       },
     )
     if (!res.ok) throw new Error(`ElevenLabs ${res.status}`)
-    return URL.createObjectURL(await res.blob())
+    return res.blob()
   }
 
   enqueue(sentence) {
@@ -234,8 +235,10 @@ class ElevenSpeaker {
     this.queue = this.queue
       .then(async () => {
         if (this.stopped) return
-        const url = await clip
-        if (this.stopped) return URL.revokeObjectURL(url)
+        const blob = await clip
+        this.onClip?.(blob)
+        if (this.stopped) return
+        const url = URL.createObjectURL(blob)
         await new Promise(resolve => {
           this.audio = new Audio(url)
           this.audio.onplay = () => this.onStart?.()
