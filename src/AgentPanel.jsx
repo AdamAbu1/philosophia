@@ -1,11 +1,11 @@
 // "Ask Philosophia" — inline conversational panel below the globe.
-// Modes: the resident guide (default) and persona conversations entered from a
-// thinker's entry. BYOK: the user's Anthropic key lives in localStorage.
-// Voice mode composes a spoken conversation entirely in the browser: mic →
-// SpeechRecognition → persona chat → sentence-streamed speech (system voices,
-// or ElevenLabs character voices when that key is present).
+// Three modes: the resident guide (default), persona conversations entered
+// from a thinker's entry, and the symposium — two personas debating with the
+// owner as questioner and third chair. BYOK: the user's Anthropic key lives in
+// localStorage. Voice mode composes a spoken conversation entirely in the
+// browser: mic → SpeechRecognition → persona chat → sentence-streamed speech.
 import { useEffect, useRef, useState } from 'react'
-import { byId } from './data.js'
+import { byId, PHILOSOPHERS } from './data.js'
 import {
   Anthropic,
   MODELS,
@@ -16,6 +16,8 @@ import {
   setModel,
   buildGuideSystem,
   buildPersonaSystem,
+  buildSymposiumSystem,
+  symposiumMessages,
   contextIds,
   buildUserTurn,
   parseMarkers,
@@ -34,9 +36,12 @@ import {
   VOICE_REGISTER,
 } from './voice.js'
 
-function Reply({ text, streaming, onSelect }) {
+const ROSTER = [...PHILOSOPHERS].sort((a, b) => a.name.localeCompare(b.name))
+
+function Reply({ text, streaming, onSelect, label }) {
   return (
     <div className="agent-msg assistant">
+      {label && <span className="speaker-label">{label}</span>}
       {parseMarkers(text, { streaming }).map((seg, i) =>
         seg.type === 'chip' ? (
           <button key={i} className="tchip" onClick={() => onSelect(seg.id)}>
@@ -48,6 +53,40 @@ function Reply({ text, streaming, onSelect }) {
       )}
       {streaming && <span className="cursor">▍</span>}
     </div>
+  )
+}
+
+function Chair({ id, speaking }) {
+  const p = byId[id]
+  return (
+    <figure className="chair">
+      {LIVING.has(id) ? (
+        <div className="living-stage chair-stage" aria-hidden="true">
+          <video
+            className={speaking ? 'living' : 'living on'}
+            src={livingSrc(id, 'idle')}
+            poster={p.portrait}
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+          <video
+            className={speaking ? 'living on' : 'living'}
+            src={livingSrc(id, 'speaking')}
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+        </div>
+      ) : (
+        <div className={speaking ? 'living-stage chair-stage speaking' : 'living-stage chair-stage'}>
+          <img className="chair-still" src={p.portrait} alt={`Engraved portrait of ${p.name}`} />
+        </div>
+      )}
+      <figcaption className="nameplate">{p.name}</figcaption>
+    </figure>
   )
 }
 
@@ -64,6 +103,9 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
   const [voiceOn, setVoiceOn] = useState(false)
   const [listening, setListening] = useState(false)
   const [speaking, setSpeaking] = useState(false)
+  const [symp, setSymp] = useState(null) // {a, b} while a symposium sits
+  const [sympSetup, setSympSetup] = useState(false)
+  const [sympDraft, setSympDraft] = useState({ a: 'socrates', b: 'nietzsche', q: '' })
 
   const streamRef = useRef(null)
   const speakerRef = useRef(null)
@@ -71,32 +113,30 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
   const logRef = useRef(null)
   const voiceOnRef = useRef(false)
   const busyRef = useRef(false)
-  const personaRef = useRef(personaId)
-  // The listener and speaker outlive renders; their callbacks must call the
-  // CURRENT send/startListening, never the closure they were created in —
-  // a cached stale send once routed spoken questions to the wrong persona.
-  const sendRef = useRef(() => {})
-  const startListeningRef = useRef(() => {})
+  const sympRef = useRef(null)
+  const messagesRef = useRef([])
 
   const persona = personaId ? byId[personaId] : null
   const support = voiceSupport()
   voiceOnRef.current = voiceOn
   busyRef.current = busy
-  personaRef.current = personaId
+  sympRef.current = symp
+  messagesRef.current = messages
 
   const quiesceVoice = () => {
     speakerRef.current?.stop()
     speakerRef.current = null
     listenerRef.current?.abort()
-    listenerRef.current = null
     setSpeaking(false)
     setListening(false)
   }
 
-  // Entering or leaving a persona starts a fresh conversation.
+  // Entering or leaving a persona resets the panel — including any symposium.
   useEffect(() => {
     streamRef.current?.abort()
     quiesceVoice()
+    setSymp(null)
+    setSympSetup(false)
     setMessages([])
     setError(null)
   }, [personaId])
@@ -141,6 +181,15 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
     setError(null)
   }
 
+  const adjourn = () => {
+    streamRef.current?.abort()
+    quiesceVoice()
+    setSymp(null)
+    setSympSetup(false)
+    setMessages([])
+    setError(null)
+  }
+
   const stopAll = () => {
     streamRef.current?.abort()
     quiesceVoice()
@@ -172,7 +221,8 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
         onInterim: t => setInput(t),
         onFinal: t => {
           setInput('')
-          sendRef.current(t)
+          if (sympRef.current) interject(t)
+          else send(t)
         },
         onEnd: () => setListening(false),
         onError: e => {
@@ -196,46 +246,28 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
     else startListening()
   }
 
-  const send = async question => {
-    question = (question ?? '').trim()
-    if (!question || busyRef.current || !getApiKey()) return
+  // ---- shared streaming core -----------------------------------------------
 
-    const wantSpeech = voiceOnRef.current
-    // Resolve the persona at call time — spoken sends can arrive through
-    // long-lived recognition callbacks, never trust their creation closure.
-    const activePersonaId = personaRef.current
-    const activePersona = activePersonaId ? byId[activePersonaId] : null
-    const lastReply = [...messages].reverse().find(m => m.role === 'assistant')?.text ?? ''
-    const ids = contextIds(question, { personaId: activePersonaId, selectedId, lastReply })
-    const apiMessages = []
-    for (const m of messages) {
-      // Past user turns replay without their <records> to keep history lean.
-      if (m.role === 'user') apiMessages.push({ role: 'user', content: m.question })
-      else if (m.blocks) apiMessages.push({ role: 'assistant', content: m.blocks })
-      else if (m.text) apiMessages.push({ role: 'assistant', content: m.text })
-    }
-    apiMessages.push({ role: 'user', content: buildUserTurn(question, ids) })
-
+  // Streams one reply. `speakerId` labels symposium turns (null = guide or
+  // persona); `system`/`apiMessages` are fully built by the caller.
+  const runStream = async ({ system, apiMessages, speakerId, voicePersona, autoListen }) => {
     setMessages(ms => [
       ...ms,
-      { role: 'user', question },
-      { role: 'assistant', text: '', blocks: null, streaming: true },
+      { role: 'assistant', text: '', blocks: null, streaming: true, speakerId },
     ])
-    setInput('')
     setBusy(true)
     busyRef.current = true
     setError(null)
 
-    // Voice: resolve the speaker first (first ElevenLabs use fetches the
-    // voice library; cached afterwards), so sentences can play as they land.
+    const wantSpeech = voiceOnRef.current
     speakerRef.current?.stop()
     let speaker = null
     if (wantSpeech) {
-      speaker = await makeSpeaker(activePersonaId, {
+      speaker = await makeSpeaker(voicePersona, {
         onStart: () => setSpeaking(true),
         onIdle: () => {
           setSpeaking(false)
-          if (voiceOnRef.current && !busyRef.current && support.stt) startListeningRef.current()
+          if (autoListen && voiceOnRef.current && !busyRef.current && support.stt) startListening()
         },
         onError: () => setError('Character voices unavailable — using system voices.'),
       })
@@ -251,11 +283,10 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
       for (const s of sentences) speaker.enqueue(speakableText(s))
     }
 
-    const baseSystem = activePersona ? buildPersonaSystem(activePersona.id) : buildGuideSystem()
     const stream = streamReply({
       apiKey: getApiKey(),
       model,
-      system: wantSpeech ? baseSystem + VOICE_REGISTER : baseSystem,
+      system: wantSpeech ? system + VOICE_REGISTER : system,
       effort: wantSpeech ? 'low' : undefined,
       messages: apiMessages,
       onText: delta => {
@@ -277,16 +308,16 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
         .join('')
       setMessages(ms => [
         ...ms.slice(0, -1),
-        { role: 'assistant', text, blocks: final.content, streaming: false },
+        { role: 'assistant', text, blocks: final.content, streaming: false, speakerId },
       ])
       if (speaker) {
         const rest = flushRemainder(accumulated, spokenOffset)
         if (rest) speaker.enqueue(speakableText(rest))
         else if (speaker.pending <= 0) {
           setSpeaking(false)
-          if (voiceOnRef.current && support.stt) {
+          if (autoListen && voiceOnRef.current && support.stt) {
             busyRef.current = false
-            startListeningRef.current()
+            startListening()
           }
         }
       }
@@ -322,23 +353,136 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
     }
   }
 
-  sendRef.current = send
-  startListeningRef.current = startListening
+  // ---- guide & persona -----------------------------------------------------
+
+  const send = async question => {
+    question = (question ?? '').trim()
+    if (!question || busyRef.current || !getApiKey()) return
+    const prior = messagesRef.current
+    const lastReply = [...prior].reverse().find(m => m.role === 'assistant')?.text ?? ''
+    const ids = contextIds(question, { personaId, selectedId, lastReply })
+    const apiMessages = []
+    for (const m of prior) {
+      // Past user turns replay without their <records> to keep history lean.
+      if (m.role === 'user') apiMessages.push({ role: 'user', content: m.question })
+      else if (m.blocks) apiMessages.push({ role: 'assistant', content: m.blocks })
+      else if (m.text) apiMessages.push({ role: 'assistant', content: m.text })
+    }
+    apiMessages.push({ role: 'user', content: buildUserTurn(question, ids) })
+    setMessages(ms => [...ms, { role: 'user', question }])
+    setInput('')
+    await runStream({
+      system: persona ? buildPersonaSystem(persona.id) : buildGuideSystem(),
+      apiMessages,
+      speakerId: null,
+      voicePersona: personaId,
+      autoListen: true,
+    })
+  }
+
+  // ---- symposium -----------------------------------------------------------
+
+  const toEvents = msgs =>
+    msgs
+      .filter(m => (m.role === 'user' ? true : !!m.text))
+      .map(m =>
+        m.role === 'user'
+          ? { who: 'user', text: m.question }
+          : { who: m.speakerId, text: m.text, blocks: m.blocks },
+      )
+
+  const nextSpeaker = () => {
+    const s = sympRef.current
+    if (!s) return null
+    const last = [...messagesRef.current].reverse().find(m => m.role === 'assistant' && m.speakerId)
+    return last?.speakerId === s.a ? s.b : s.a
+  }
+
+  const runTurn = async (speakerId, events) => {
+    const s = sympRef.current
+    if (!s || busyRef.current || !getApiKey()) return
+    const otherId = speakerId === s.a ? s.b : s.a
+    const lastHeard = [...events].reverse().find(e => e.who !== speakerId)
+    const lastOwnRival = [...events].reverse().find(e => e.who === otherId)
+    const ids = contextIds(lastHeard?.text ?? '', {
+      personaId: speakerId,
+      selectedId: otherId,
+      lastReply: lastOwnRival?.text ?? '',
+    })
+    await runStream({
+      system: buildSymposiumSystem(speakerId, otherId),
+      apiMessages: symposiumMessages(events, speakerId, ids),
+      speakerId,
+      voicePersona: speakerId,
+      autoListen: false,
+    })
+  }
+
+  const convene = e => {
+    e.preventDefault()
+    const { a, b, q } = sympDraft
+    const question = q.trim()
+    if (!question || a === b || busyRef.current) return
+    const seat = { a, b }
+    setSymp(seat)
+    sympRef.current = seat
+    setSympSetup(false)
+    const opening = [{ role: 'user', question }]
+    setMessages(opening)
+    messagesRef.current = opening
+    setSympDraft(d => ({ ...d, q: '' }))
+    runTurn(a, toEvents(opening))
+  }
+
+  const interject = text => {
+    text = (text ?? '').trim()
+    if (!text || busyRef.current) return
+    const speakerId = nextSpeaker()
+    const withUser = [...messagesRef.current, { role: 'user', question: text }]
+    setMessages(withUser)
+    messagesRef.current = withUser
+    setInput('')
+    runTurn(speakerId, toEvents(withUser))
+  }
+
+  const continueTurn = () => runTurn(nextSpeaker(), toEvents(messagesRef.current))
+
+  // ---- render --------------------------------------------------------------
 
   const showForm = !keyed || showKeyForm
   const hasElKey = !!getElevenLabsKey()
+  const activeSpeakerId = [...messages].reverse().find(m => m.role === 'assistant')?.speakerId
+  const nextName = symp ? byId[nextSpeaker()]?.name : null
+
+  const openSetup = () => {
+    setSympSetup(true)
+    setSympDraft(d => ({
+      ...d,
+      a: personaId ?? selectedId ?? d.a,
+      b: (personaId ?? selectedId) === d.b ? (d.b === 'nietzsche' ? 'buddha' : 'nietzsche') : d.b,
+    }))
+  }
 
   return (
     <section className="agent" aria-label="Ask Philosophia">
       <div className="agent-frame">
         <div className="agent-head">
-          <img
-            className={speaking ? 'agent-medallion speaking' : 'agent-medallion'}
-            src={persona ? persona.thumb : 'portraits/philosophia.jpg'}
-            alt={persona ? `Engraved portrait of ${persona.name}` : 'Lady Philosophia, engraved'}
-          />
+          {!symp && (
+            <img
+              className={speaking ? 'agent-medallion speaking' : 'agent-medallion'}
+              src={persona ? persona.thumb : 'portraits/philosophia.jpg'}
+              alt={persona ? `Engraved portrait of ${persona.name}` : 'Lady Philosophia, engraved'}
+            />
+          )}
           <h2>ASK PHILOSOPHIA</h2>
-          {persona ? (
+          {symp ? (
+            <span className="agent-mode">
+              symposium: {byId[symp.a].name} &amp; {byId[symp.b].name}
+              <button className="agent-exit" onClick={adjourn}>
+                ✕ adjourn
+              </button>
+            </span>
+          ) : persona ? (
             <span className="agent-mode">
               conversing with {persona.name}
               <button className="agent-exit" onClick={onExitPersona}>
@@ -365,12 +509,17 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
                 {voiceOn ? 'voice on' : 'voice off'}
               </button>
             )}
+            {!showForm && !symp && !sympSetup && (
+              <button className="agent-link" onClick={openSetup}>
+                symposium
+              </button>
+            )}
             {keyed && !showKeyForm && (
               <button className="agent-link" onClick={() => setShowKeyForm(true)}>
                 keys
               </button>
             )}
-            {messages.length > 0 && (
+            {messages.length > 0 && !symp && (
               <button className="agent-link" onClick={clearConversation}>
                 clear
               </button>
@@ -419,9 +568,58 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
               )}
             </div>
           </form>
+        ) : sympSetup ? (
+          <form className="symp-setup" onSubmit={convene}>
+            <p className="agent-note">
+              Seat two thinkers across from each other, pose the opening question, and
+              moderate — or simply listen. You may interject at any time.
+            </p>
+            <div className="agent-row symp-chairs">
+              <select
+                value={sympDraft.a}
+                onChange={e => setSympDraft(d => ({ ...d, a: e.target.value }))}
+                aria-label="First chair"
+              >
+                {ROSTER.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              <span className="symp-amp">&amp;</span>
+              <select
+                value={sympDraft.b}
+                onChange={e => setSympDraft(d => ({ ...d, b: e.target.value }))}
+                aria-label="Second chair"
+              >
+                {ROSTER.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {sympDraft.a === sympDraft.b && (
+              <p className="agent-error">A symposium needs two different thinkers.</p>
+            )}
+            <div className="agent-row">
+              <input
+                value={sympDraft.q}
+                onChange={e => setSympDraft(d => ({ ...d, q: e.target.value }))}
+                placeholder="Pose the opening question…"
+                aria-label="Opening question"
+              />
+              <button type="submit" disabled={!sympDraft.q.trim() || sympDraft.a === sympDraft.b}>
+                convene
+              </button>
+              <button type="button" onClick={() => setSympSetup(false)}>
+                cancel
+              </button>
+            </div>
+          </form>
         ) : (
           <div className="agent-body">
-            {persona && LIVING.has(persona.id) && (
+            {!symp && persona && LIVING.has(persona.id) && (
               <div className="living-stage" aria-hidden="true">
                 <video
                   className={speaking ? 'living' : 'living on'}
@@ -443,73 +641,88 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
               </div>
             )}
             <div className="agent-chat">
-            {messages.length === 0 && (
-              <p className="agent-hint">
-                {persona
-                  ? voiceOn
-                    ? `You stand before ${persona.name} — press the mic and speak.`
-                    : `You stand before ${persona.name} — ask what you will.`
-                  : 'Ask about any thinker, school, or idea — the guide answers from the atlas’s own entries, and every name it cites turns the globe.'}
-              </p>
-            )}
-            {messages.length > 0 && (
-              <div className="agent-log" ref={logRef}>
-                {messages.map((m, i) =>
-                  m.role === 'user' ? (
-                    <div className="agent-msg user" key={i}>
-                      {m.question}
-                    </div>
-                  ) : (
-                    <Reply key={i} text={m.text} streaming={m.streaming} onSelect={onSelect} />
-                  ),
-                )}
-              </div>
-            )}
-            {error && <p className="agent-error">{error}</p>}
-            <form
-              className="agent-row"
-              onSubmit={e => {
-                e.preventDefault()
-                send(input)
-              }}
-            >
-              {voiceOn && support.stt && (
-                <button
-                  type="button"
-                  className={listening ? 'micbtn listening' : 'micbtn'}
-                  onClick={micPress}
-                  aria-label={listening ? 'Stop listening' : 'Speak'}
-                  title={listening ? 'listening — tap to stop' : 'tap to speak'}
-                >
-                  ◉
-                </button>
+              {symp && (
+                <div className="symposium-stage">
+                  <Chair id={symp.a} speaking={speaking && activeSpeakerId === symp.a} />
+                  <Chair id={symp.b} speaking={speaking && activeSpeakerId === symp.b} />
+                </div>
               )}
-              <input
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                placeholder={
-                  listening
-                    ? 'listening…'
-                    : persona
-                      ? `Address ${persona.name}…`
-                      : 'Ask the guide…'
-                }
-                aria-label="Your question"
-              />
-              <button
-                type={busy ? 'button' : 'submit'}
-                onClick={busy ? stopAll : undefined}
-                disabled={!busy && !input.trim()}
+              {messages.length === 0 && (
+                <p className="agent-hint">
+                  {persona
+                    ? voiceOn
+                      ? `You stand before ${persona.name} — press the mic and speak.`
+                      : `You stand before ${persona.name} — ask what you will.`
+                    : 'Ask about any thinker, school, or idea — the guide answers from the atlas’s own entries, and every name it cites turns the globe. Or convene a symposium and let two of them argue.'}
+                </p>
+              )}
+              {messages.length > 0 && (
+                <div className="agent-log" ref={logRef}>
+                  {messages.map((m, i) =>
+                    m.role === 'user' ? (
+                      <div className="agent-msg user" key={i}>
+                        {m.question}
+                      </div>
+                    ) : (
+                      <Reply
+                        key={i}
+                        text={m.text}
+                        streaming={m.streaming}
+                        onSelect={onSelect}
+                        label={symp && m.speakerId ? byId[m.speakerId].name : null}
+                      />
+                    ),
+                  )}
+                </div>
+              )}
+              {error && <p className="agent-error">{error}</p>}
+              <form
+                className="agent-row"
+                onSubmit={e => {
+                  e.preventDefault()
+                  if (symp) input.trim() ? interject(input) : continueTurn()
+                  else send(input)
+                }}
               >
-                {busy ? 'stop' : 'ask'}
-              </button>
-            </form>
-            {voiceOn && !support.stt && (
-              <p className="agent-note">
-                Spoken replies are on; this browser has no speech recognition, so type your
-                side of the conversation.
-              </p>
-            )}
+                {voiceOn && support.stt && (
+                  <button
+                    type="button"
+                    className={listening ? 'micbtn listening' : 'micbtn'}
+                    onClick={micPress}
+                    aria-label={listening ? 'Stop listening' : 'Speak'}
+                    title={listening ? 'listening — tap to stop' : 'tap to speak'}
+                  >
+                    ◉
+                  </button>
+                )}
+                <input
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  placeholder={
+                    listening
+                      ? 'listening…'
+                      : symp
+                        ? 'Interject — or press return to let them continue…'
+                        : persona
+                          ? `Address ${persona.name}…`
+                          : 'Ask the guide…'
+                  }
+                  aria-label="Your question"
+                />
+                <button
+                  type={busy ? 'button' : 'submit'}
+                  onClick={busy ? stopAll : undefined}
+                  disabled={!busy && !symp && !input.trim()}
+                >
+                  {busy ? 'stop' : symp ? (input.trim() ? 'interject' : `${nextName} responds`) : 'ask'}
+                </button>
+              </form>
+              {voiceOn && !support.stt && (
+                <p className="agent-note">
+                  Spoken replies are on; this browser has no speech recognition, so type your
+                  side of the conversation.
+                </p>
+              )}
             </div>
           </div>
         )}

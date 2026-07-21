@@ -5,6 +5,8 @@ import {
   serializeThinker,
   buildGuideSystem,
   buildPersonaSystem,
+  buildSymposiumSystem,
+  symposiumMessages,
   citedIds,
   contextIds,
   buildUserTurn,
@@ -45,6 +47,44 @@ describe('system prompts', () => {
     expect(sys).toContain('first person')
     expect(sys).toContain('never quiz or test')
     expect(sys).toContain('Do not write [[nietzsche]] for yourself')
+  })
+})
+
+describe('symposium', () => {
+  it('system prompt seats both thinkers and keeps the persona rules', () => {
+    const sys = buildSymposiumSystem('nietzsche', 'buddha')
+    expect(sys).toContain(`You are ${byId.nietzsche.name}`)
+    expect(sys).toContain('symposium')
+    expect(sys).toContain(byId.buddha.name)
+    expect(sys).toContain('never quiz or test')
+    expect(sys).toContain('first person')
+  })
+
+  it('replays own turns as assistant and attributes everyone else', () => {
+    const events = [
+      { who: 'user', text: 'Is suffering necessary?' },
+      { who: 'nietzsche', text: 'Suffering is the whetstone.', blocks: [{ type: 'text', text: 'Suffering is the whetstone.' }] },
+      { who: 'buddha', text: 'Suffering has a cause, and a cessation.' },
+      { who: 'user', text: 'Can you both be right?' },
+    ]
+    const msgs = symposiumMessages(events, 'nietzsche', ['nietzsche', 'buddha'])
+    expect(msgs[0]).toEqual({ role: 'user', content: 'The questioner says: Is suffering necessary?' })
+    expect(msgs[1].role).toBe('assistant')
+    expect(msgs[1].content).toEqual(events[1].blocks)
+    expect(msgs[2]).toEqual({
+      role: 'user',
+      content: `${byId.buddha.name} says: Suffering has a cause, and a cessation.`,
+    })
+    expect(msgs[3].content).toContain('The questioner says: Can you both be right?')
+    const cue = msgs[msgs.length - 1]
+    expect(cue.role).toBe('user')
+    expect(cue.content).toContain('<records>')
+    expect(cue.content).toContain('your turn')
+  })
+
+  it('falls back to text when a turn has no stored blocks', () => {
+    const msgs = symposiumMessages([{ who: 'buddha', text: 'Craving binds.' }], 'buddha', [])
+    expect(msgs[0]).toEqual({ role: 'assistant', content: 'Craving binds.' })
   })
 })
 

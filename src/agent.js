@@ -86,6 +86,39 @@ The rest of the canon (id — name, dates, school, birthplace, era, tradition):
 ${buildRoster()}`
 }
 
+// ---- symposium --------------------------------------------------------------
+
+// Two personas debate with the owner as questioner and third chair. Each turn
+// is a persona call: the speaker's own past turns replay as assistant
+// messages, everyone else's words arrive as attributed user messages.
+export function buildSymposiumSystem(speakerId, otherId) {
+  const other = byId[otherId]
+  return `${buildPersonaSystem(speakerId)}
+
+This is a symposium, not a private audience: seated across from you is ${other.name}, whose entry also lives in this atlas, and the owner sits as questioner and third chair. When it is your turn, engage what was just said — directly, by name, taking up its strongest point — from your own convictions and method. Agree only where you truly would; press where you would press. Keep each turn to one tight paragraph so the exchange stays alive. Never write ${other.name}'s words for them, and answer the questioner plainly whenever they interject.`
+}
+
+// events: [{who: 'user'|thinkerId, text, blocks?}] in order. Produces the
+// message list for `speakerId`'s next turn, ending with a records-bearing cue.
+export function symposiumMessages(events, speakerId, ids) {
+  const msgs = events.map(e =>
+    e.who === speakerId
+      ? { role: 'assistant', content: e.blocks ?? e.text }
+      : {
+          role: 'user',
+          content:
+            e.who === 'user'
+              ? `The questioner says: ${e.text}`
+              : `${byId[e.who].name} says: ${e.text}`,
+        },
+  )
+  msgs.push({
+    role: 'user',
+    content: buildUserTurn('It is your turn — respond to what was just said.', ids),
+  })
+  return msgs
+}
+
 // ---- per-turn context retrieval --------------------------------------------
 
 export function citedIds(text) {
