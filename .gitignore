@@ -1,3 +1,8 @@
 node_modules/
 dist/
 .DS_Store
+
+# Full-res asset originals & audio scratch — never commit (purged from history once already)
+Philosophy-portrait-originals/
+voice-auditions/
+*.mp3
