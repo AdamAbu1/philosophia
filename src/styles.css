@@ -252,3 +252,19 @@ canvas.globe:active { cursor: grabbing; }
   50% { box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--ink-soft); }
 }
 .agent-link.voice-on { color: var(--ink); text-decoration: underline; }
+.agent-body { display: flex; gap: 20px; align-items: flex-start; }
+.agent-chat { flex: 1; min-width: 0; }
+.living-stage {
+  flex: none; width: 150px; aspect-ratio: 3 / 4; position: relative; margin-top: 14px;
+  background: var(--paper); overflow: hidden; border: 1px solid var(--rule);
+  box-shadow: 0 0 0 3px var(--paper), 0 0 0 4px var(--rule);
+}
+.living-stage video {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  opacity: 0; transition: opacity .35s ease;
+}
+.living-stage video.on { opacity: 1; }
+@media (max-width: 700px) {
+  .agent-body { flex-direction: column; }
+  .living-stage { width: 128px; margin-top: 10px; }
+}

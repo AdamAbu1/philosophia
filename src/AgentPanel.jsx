@@ -21,6 +21,7 @@ import {
   parseMarkers,
   streamReply,
 } from './agent.js'
+import { LIVING, livingSrc } from './living.js'
 import {
   voiceSupport,
   makeSpeaker,
@@ -419,7 +420,29 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
             </div>
           </form>
         ) : (
-          <>
+          <div className="agent-body">
+            {persona && LIVING.has(persona.id) && (
+              <div className="living-stage" aria-hidden="true">
+                <video
+                  className={speaking ? 'living' : 'living on'}
+                  src={livingSrc(persona.id, 'idle')}
+                  poster={persona.portrait}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                />
+                <video
+                  className={speaking ? 'living on' : 'living'}
+                  src={livingSrc(persona.id, 'speaking')}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                />
+              </div>
+            )}
+            <div className="agent-chat">
             {messages.length === 0 && (
               <p className="agent-hint">
                 {persona
@@ -487,7 +510,8 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
                 side of the conversation.
               </p>
             )}
-          </>
+            </div>
+          </div>
         )}
       </div>
     </section>
