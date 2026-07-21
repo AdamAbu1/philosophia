@@ -51,5 +51,6 @@ archetype; for post-1400 figures the model knows the historical faces.
   is suspended there, so idle spin, the play sweep, and the rotate-to-selection tween
   don't animate in the pane. Scrubbing and clicking still work (event-driven). The app
   code is correct — verify animations in a real browser; don't "fix" them.
-- Open: keyboard a11y for globe points, portrait webp compression (~96MB of PNGs),
-  deploy target, v2 traditions (Chinese · Indian · Islamic points on the same globe).
+- Open: keyboard a11y for globe points (canvas hit-targets — invisible to tab
+  navigation), thumbnail PNG → webp compression for faster first paint on phones.
+  (Deploy and v2 traditions are DONE — GitHub Pages live, all traditions on the globe.)
