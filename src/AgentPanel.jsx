@@ -71,6 +71,11 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
   const voiceOnRef = useRef(false)
   const busyRef = useRef(false)
   const personaRef = useRef(personaId)
+  // The listener and speaker outlive renders; their callbacks must call the
+  // CURRENT send/startListening, never the closure they were created in —
+  // a cached stale send once routed spoken questions to the wrong persona.
+  const sendRef = useRef(() => {})
+  const startListeningRef = useRef(() => {})
 
   const persona = personaId ? byId[personaId] : null
   const support = voiceSupport()
@@ -82,6 +87,7 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
     speakerRef.current?.stop()
     speakerRef.current = null
     listenerRef.current?.abort()
+    listenerRef.current = null
     setSpeaking(false)
     setListening(false)
   }
@@ -165,7 +171,7 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
         onInterim: t => setInput(t),
         onFinal: t => {
           setInput('')
-          send(t)
+          sendRef.current(t)
         },
         onEnd: () => setListening(false),
         onError: e => {
@@ -194,8 +200,12 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
     if (!question || busyRef.current || !getApiKey()) return
 
     const wantSpeech = voiceOnRef.current
+    // Resolve the persona at call time — spoken sends can arrive through
+    // long-lived recognition callbacks, never trust their creation closure.
+    const activePersonaId = personaRef.current
+    const activePersona = activePersonaId ? byId[activePersonaId] : null
     const lastReply = [...messages].reverse().find(m => m.role === 'assistant')?.text ?? ''
-    const ids = contextIds(question, { personaId, selectedId, lastReply })
+    const ids = contextIds(question, { personaId: activePersonaId, selectedId, lastReply })
     const apiMessages = []
     for (const m of messages) {
       // Past user turns replay without their <records> to keep history lean.
@@ -220,11 +230,11 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
     speakerRef.current?.stop()
     let speaker = null
     if (wantSpeech) {
-      speaker = await makeSpeaker(personaId, {
+      speaker = await makeSpeaker(activePersonaId, {
         onStart: () => setSpeaking(true),
         onIdle: () => {
           setSpeaking(false)
-          if (voiceOnRef.current && !busyRef.current && support.stt) startListening()
+          if (voiceOnRef.current && !busyRef.current && support.stt) startListeningRef.current()
         },
         onError: () => setError('Character voices unavailable — using system voices.'),
       })
@@ -240,7 +250,7 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
       for (const s of sentences) speaker.enqueue(speakableText(s))
     }
 
-    const baseSystem = persona ? buildPersonaSystem(persona.id) : buildGuideSystem()
+    const baseSystem = activePersona ? buildPersonaSystem(activePersona.id) : buildGuideSystem()
     const stream = streamReply({
       apiKey: getApiKey(),
       model,
@@ -275,7 +285,7 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
           setSpeaking(false)
           if (voiceOnRef.current && support.stt) {
             busyRef.current = false
-            startListening()
+            startListeningRef.current()
           }
         }
       }
@@ -310,6 +320,9 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
       streamRef.current = null
     }
   }
+
+  sendRef.current = send
+  startListeningRef.current = startListening
 
   const showForm = !keyed || showKeyForm
   const hasElKey = !!getElevenLabsKey()
