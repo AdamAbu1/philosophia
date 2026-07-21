@@ -101,6 +101,33 @@ describe('voice casting', () => {
     const voices = [{ voice_id: 'v9', labels: {} }]
     expect(elevenVoiceFor('arendt', voices).voice_id).toBe('v9')
   })
+
+  it('ancients prefer aged voices over young ones', () => {
+    const voices = [
+      { voice_id: 'a1', labels: { gender: 'male', age: 'young' } },
+      { voice_id: 'a2', labels: { gender: 'male', age: 'old' } },
+    ]
+    expect(elevenVoiceFor('socrates', voices).voice_id).toBe('a2')
+    expect(elevenVoiceFor('confucius', voices).voice_id).toBe('a2')
+  })
+
+  it('enlightenment thinkers avoid young voices when older exist', () => {
+    const voices = [
+      { voice_id: 'b1', labels: { gender: 'male', age: 'young' } },
+      { voice_id: 'b2', labels: { gender: 'male', age: 'middle_aged' } },
+    ]
+    expect(elevenVoiceFor('kant', voices).voice_id).toBe('b2')
+  })
+
+  it('20th-century thinkers may cast young voices', () => {
+    const voices = [{ voice_id: 'c1', labels: { gender: 'female', age: 'young' } }]
+    expect(elevenVoiceFor('beauvoir', voices).voice_id).toBe('c1')
+  })
+
+  it('falls back to any age when the library has no aged voices', () => {
+    const voices = [{ voice_id: 'd1', labels: { gender: 'male', age: 'young' } }]
+    expect(elevenVoiceFor('socrates', voices).voice_id).toBe('d1')
+  })
 })
 
 describe('voice register addendum', () => {

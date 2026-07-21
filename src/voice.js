@@ -87,15 +87,36 @@ export function voiceProfileFor(id) {
   }
 }
 
+// Ancients and medievals should sound aged; early moderns middle-aged; only
+// the 20th century may draw a young voice. null = any age (the guide included).
+const AGE_PREF = {
+  pre: ['old', 'middle_aged'],
+  cla: ['old', 'middle_aged'],
+  hel: ['old', 'middle_aged'],
+  med: ['old', 'middle_aged'],
+  ren: ['middle_aged', 'old'],
+  enl: ['middle_aged', 'old'],
+  c19: ['middle_aged', 'old'],
+  c20: null,
+}
+const agePrefFor = id => (id == null ? null : AGE_PREF[byId[id]?.era] ?? null)
+
 // ElevenLabs: pick a voice deterministically from the account's library,
-// gender-matched, stable across sessions (list sorted by voice_id).
+// gender-matched and era-age-matched, stable across sessions (sorted by
+// voice_id). Age narrows the pool only when the library can satisfy it.
 export function elevenVoiceFor(id, voices) {
   const wantFemale = isFemaleVoice(id)
   const byGender = voices.filter(v => {
     const g = (v.labels?.gender ?? '').toLowerCase()
     return wantFemale ? g === 'female' : g === 'male'
   })
-  const pool = (byGender.length ? byGender : voices).slice().sort((a, b) => a.voice_id.localeCompare(b.voice_id))
+  let pool = byGender.length ? byGender : voices
+  const pref = agePrefFor(id)
+  if (pref) {
+    const aged = pool.filter(v => pref.includes((v.labels?.age ?? '').toLowerCase()))
+    if (aged.length) pool = aged
+  }
+  pool = pool.slice().sort((a, b) => a.voice_id.localeCompare(b.voice_id))
   if (!pool.length) return null
   return pool[hash(id ?? 'philosophia') % pool.length]
 }
