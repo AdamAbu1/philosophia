@@ -76,7 +76,7 @@ function thumbFor(p, onReady) {
   return img.complete && img.naturalWidth > 0 ? img : null
 }
 
-export default function Globe({ selectedId, onSelect }) {
+export default function Globe({ selectedId, onSelect, itinerary }) {
   // Scrubber UI state (small React tree); the map itself renders imperatively.
   const [year, setYear] = useState(YEAR_MIN)
   const [lensOn, setLensOn] = useState(false)
@@ -102,6 +102,8 @@ export default function Globe({ selectedId, onSelect }) {
   lensRef.current = lensOn
   playRef.current = playing
   selectedRef.current = selectedId
+  const itineraryRef = useRef(null)
+  itineraryRef.current = itinerary
 
   function draw() {
     const canvas = canvasRef.current
@@ -151,6 +153,35 @@ export default function Globe({ selectedId, onSelect }) {
     ctx.strokeStyle = INK_LAND
     ctx.lineWidth = 0.7
     ctx.stroke()
+
+    // itinerary route: a dotted expedition line through the stops in order —
+    // visited stops filled, upcoming stops open rings.
+    const trip = itineraryRef.current
+    if (trip) {
+      ctx.beginPath()
+      for (let i = 0; i < trip.ids.length - 1; i++) {
+        path({ type: 'LineString', coordinates: [COORDS[trip.ids[i]], COORDS[trip.ids[i + 1]]] })
+      }
+      ctx.setLineDash([7, 5])
+      ctx.strokeStyle = 'rgba(43,38,32,.55)'
+      ctx.lineWidth = 1.4
+      ctx.stroke()
+      ctx.setLineDash([])
+      trip.ids.forEach((id, i) => {
+        if (!isFrontside(COORDS[id], rotation)) return
+        const [px, py] = projection(COORDS[id])
+        ctx.beginPath()
+        ctx.arc(px, py, 6, 0, 7)
+        if (i <= trip.upTo) {
+          ctx.fillStyle = 'rgba(43,38,32,.8)'
+          ctx.fill()
+        } else {
+          ctx.strokeStyle = 'rgba(43,38,32,.7)'
+          ctx.lineWidth = 1.2
+          ctx.stroke()
+        }
+      })
+    }
 
     // influence arcs for the selected thinker: great circles, horizon-clipped.
     // Dashed = drew from; solid = went on to influence.
