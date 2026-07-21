@@ -24,6 +24,7 @@ import {
 } from './agent.js'
 import { LIVING, livingSrc } from './living.js'
 import { sessionFromMessages, renderBroadsheet, transcriptText, tweetUrl } from './broadsheet.js'
+import { addClipping, clippingsBlock } from './codex.js'
 import {
   voiceSupport,
   makeSpeaker,
@@ -38,7 +39,7 @@ import {
 
 const ROSTER = [...PHILOSOPHERS].sort((a, b) => a.name.localeCompare(b.name))
 
-function Reply({ text, streaming, onSelect, label }) {
+function Reply({ text, streaming, onSelect, label, onClip, clipped }) {
   return (
     <div className="agent-msg assistant">
       {label && <span className="speaker-label">{label}</span>}
@@ -52,6 +53,11 @@ function Reply({ text, streaming, onSelect, label }) {
         ),
       )}
       {streaming && <span className="cursor">▍</span>}
+      {!streaming && text && onClip && (
+        <button className="clipbtn" onClick={onClip} title="Clip to your commonplace book">
+          {clipped ? '❧ clipped' : '❧'}
+        </button>
+      )}
     </div>
   )
 }
@@ -108,6 +114,7 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
   const [sympDraft, setSympDraft] = useState({ a: 'socrates', b: 'nietzsche', q: '' })
   const [shareMenu, setShareMenu] = useState(null)
   const [publishing, setPublishing] = useState(false)
+  const [clippedMsgs, setClippedMsgs] = useState(() => new Set())
   const tapeRef = useRef([]) // mp3 blobs of a voiced symposium, in play order
 
   const streamRef = useRef(null)
@@ -153,6 +160,7 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
     setMessages([])
     setError(null)
     tapeRef.current = []
+    setClippedMsgs(new Set())
     closeShareMenu()
   }, [personaId])
 
@@ -194,6 +202,7 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
     quiesceVoice()
     setMessages([])
     setError(null)
+    setClippedMsgs(new Set())
   }
 
   const adjourn = () => {
@@ -204,6 +213,7 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
     setMessages([])
     setError(null)
     tapeRef.current = []
+    setClippedMsgs(new Set())
     closeShareMenu()
   }
 
@@ -386,7 +396,7 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
       else if (m.blocks) apiMessages.push({ role: 'assistant', content: m.blocks })
       else if (m.text) apiMessages.push({ role: 'assistant', content: m.text })
     }
-    apiMessages.push({ role: 'user', content: buildUserTurn(question, ids) })
+    apiMessages.push({ role: 'user', content: buildUserTurn(question, ids) + clippingsBlock(question) })
     setMessages(ms => [...ms, { role: 'user', question }])
     setInput('')
     await runStream({
@@ -485,6 +495,7 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
     const opening = [{ role: 'user', question }]
     setMessages(opening)
     messagesRef.current = opening
+    setClippedMsgs(new Set())
     setSympDraft(d => ({ ...d, q: '' }))
     runTurn(a, toEvents(opening))
   }
@@ -730,6 +741,15 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
                         streaming={m.streaming}
                         onSelect={onSelect}
                         label={symp && m.speakerId ? byId[m.speakerId].name : null}
+                        clipped={clippedMsgs.has(i)}
+                        onClip={() => {
+                          addClipping({
+                            kind: 'reply',
+                            thinkerId: m.speakerId ?? personaId ?? null,
+                            text: speakableText(m.text),
+                          })
+                          setClippedMsgs(s => new Set(s).add(i))
+                        }}
                       />
                     ),
                   )}

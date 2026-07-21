@@ -4,6 +4,8 @@ import DetailPanel from './DetailPanel.jsx'
 import SearchBox from './SearchBox.jsx'
 import AgentPanel from './AgentPanel.jsx'
 import ItineraryBar from './ItineraryBar.jsx'
+import DailyLine from './DailyLine.jsx'
+import CommonplaceBook from './CommonplaceBook.jsx'
 import { itineraryById } from './itineraries.js'
 import { byId } from './data.js'
 
@@ -62,6 +64,7 @@ export default function App() {
         <div className="sub">a globe of philosophy · six centuries before the common era to the present</div>
         <SearchBox onSelect={setSelectedId} />
       </header>
+      <DailyLine onSelect={setSelectedId} />
       <Globe selectedId={selectedId} onSelect={setSelectedId} itinerary={itinerary} />
       <ItineraryBar trip={trip} onStart={startTrip} onStep={stepTrip} onEnd={endTrip} />
       <DetailPanel
@@ -78,6 +81,7 @@ export default function App() {
           onSelect={setSelectedId}
         />
       </div>
+      <CommonplaceBook onSelect={setSelectedId} />
     </>
   )
 }

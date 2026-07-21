@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { byId, eraById } from './data.js'
 import { EDGES } from './edges.js'
 import { WORK_LINKS } from './works.js'
 import { fmtRange } from './format.js'
+import { addClipping } from './codex.js'
 import Lifeline from './Lifeline.jsx'
 
 const UNLINKABLE = /^(No |Wrote |Nothing |~)/
@@ -24,6 +26,11 @@ function EdgeList({ label, entries, onJump }) {
 }
 
 export default function DetailPanel({ philosopher: p, onClose, onJump, onConverse }) {
+  const [clipped, setClipped] = useState(() => new Set())
+  const clip = (key, entry) => {
+    addClipping(entry)
+    setClipped(s => new Set(s).add(key))
+  }
   if (!p) {
     return (
       <div className="detail-hint">
@@ -54,7 +61,16 @@ export default function DetailPanel({ philosopher: p, onClose, onJump, onConvers
           <span className="c">{era.name}</span>
           {p.school !== '—' && <span className="c">{p.school}</span>}
         </div>
-        <p className="oneline">“{p.line}”</p>
+        <p className="oneline">
+          “{p.line}”{' '}
+          <button
+            className="clipbtn"
+            title="Clip to your commonplace book"
+            onClick={() => clip(`${p.id}:line`, { kind: 'line', thinkerId: p.id, text: p.line })}
+          >
+            {clipped.has(`${p.id}:line`) ? '❧ clipped' : '❧'}
+          </button>
+        </p>
         <button className="converse" onClick={() => onConverse(p.id)}>
           Converse with {p.name} ↓
         </button>
@@ -74,7 +90,21 @@ export default function DetailPanel({ philosopher: p, onClose, onJump, onConvers
         <h4>KEY IDEAS</h4>
         {p.ideas.map(i => (
           <p className="idea" key={i.title}>
-            <b>{i.title}.</b> {i.text}
+            <b>{i.title}.</b> {i.text}{' '}
+            <button
+              className="clipbtn"
+              title="Clip to your commonplace book"
+              onClick={() =>
+                clip(`${p.id}:${i.title}`, {
+                  kind: 'idea',
+                  thinkerId: p.id,
+                  title: i.title,
+                  text: `${i.title}. ${i.text}`,
+                })
+              }
+            >
+              {clipped.has(`${p.id}:${i.title}`) ? '❧ clipped' : '❧'}
+            </button>
           </p>
         ))}
         <h4>MAJOR WORKS</h4>
