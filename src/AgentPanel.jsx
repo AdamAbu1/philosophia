@@ -11,7 +11,6 @@ import {
   MODELS,
   getApiKey,
   setApiKey,
-  clearApiKey,
   getModel,
   setModel,
   buildGuideSystem,
@@ -355,9 +354,9 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
       if (err instanceof Anthropic.APIUserAbortError) {
         // user pressed stop — not an error
       } else if (err instanceof Anthropic.AuthenticationError) {
-        clearApiKey()
-        setKeyed(false)
-        setError('That key was refused — paste it again.')
+        // Keep the stored key — a transient 401 shouldn't force re-entry.
+        setShowKeyForm(true)
+        setError('The API refused that key. If it was revoked, paste a fresh one; otherwise just close this and retry.')
       } else if (err instanceof Anthropic.RateLimitError) {
         setError('Rate limited — give it a moment, then ask again.')
       } else if (err instanceof Anthropic.APIConnectionError) {
