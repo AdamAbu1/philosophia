@@ -3,6 +3,7 @@ import { byId } from '../src/data.js'
 import {
   sessionFromMessages,
   wrapLines,
+  fitTitleSpacing,
   transcriptText,
   tweetUrl,
   SITE,
@@ -48,6 +49,52 @@ describe('wrapLines', () => {
   })
   it('keeps short text on one line', () => {
     expect(wrapLines('brief', 120, measure)).toEqual(['brief'])
+  })
+})
+
+describe('fitTitleSpacing', () => {
+  // width grows with spacing: base + spacing * glyphCount
+  const measureAt = glyphs => s => 400 + s * glyphs
+  it('keeps the widest spacing that fits', () => {
+    expect(fitTitleSpacing(measureAt(40), 1120)).toBe(10) // 400+400=800 ≤ 1120
+  })
+  it('steps down when the widest overflows (the conversation-title case)', () => {
+    // 49 glyphs: 10px→890 fits 1120? 400+490=890 ≤1120 → 10. Make it tighter:
+    expect(fitTitleSpacing(measureAt(80), 1120)).toBe(8) // 10→1200>1120, 8→1040≤1120
+  })
+  it('falls back to the tightest step when nothing fits', () => {
+    expect(fitTitleSpacing(measureAt(200), 500)).toBe(2)
+  })
+})
+
+describe('solo conversations', () => {
+  const soloMessages = [
+    { role: 'user', question: 'What is courage?' },
+    { role: 'assistant', text: 'Courage, friend, may be knowing what to fear.', blocks: [] },
+    { role: 'user', question: 'Even death?' },
+    { role: 'assistant', text: 'Especially that.', blocks: [] },
+  ]
+
+  it('attributes every reply to the solo thinker', () => {
+    const s = sessionFromMessages(soloMessages, { solo: 'socrates' })
+    expect(s.solo).toBe('socrates')
+    expect(s.question).toBe('What is courage?')
+    expect(s.turns.map(t => t.who)).toEqual(['socrates', 'user', 'socrates'])
+  })
+
+  it('the guide publishes as Lady Philosophia', () => {
+    const s = sessionFromMessages(soloMessages, { solo: null })
+    expect(s.solo).toBe('philosophia')
+    const t = transcriptText(s)
+    expect(t).toContain('A CONVERSATION')
+    expect(t).toContain('with Lady Philosophia')
+    expect(t).toContain('LADY PHILOSOPHIA — Courage')
+  })
+
+  it('solo transcript and tweet name the thinker', () => {
+    const s = sessionFromMessages(soloMessages, { solo: 'socrates' })
+    expect(transcriptText(s)).toContain('with Socrates')
+    expect(decodeURIComponent(tweetUrl(s))).toContain('a conversation with Socrates')
   })
 })
 

@@ -203,6 +203,8 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
     setMessages([])
     setError(null)
     setClippedMsgs(new Set())
+    tapeRef.current = []
+    closeShareMenu()
   }
 
   const adjourn = () => {
@@ -405,6 +407,7 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
       speakerId: null,
       voicePersona: personaId,
       autoListen: true,
+      onClip: b => tapeRef.current.push(b),
     })
   }
 
@@ -448,22 +451,31 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
   }
 
   const publish = async () => {
-    const s = sympRef.current
-    if (!s || publishing) return
+    if (publishing) return
+    // Symposiums publish their two chairs; anything else is a solo
+    // conversation with the persona (or the guide when personaId is null).
+    const cast = sympRef.current ?? { solo: personaId }
     setPublishing(true)
     try {
-      const session = sessionFromMessages(messagesRef.current, s)
+      const session = sessionFromMessages(messagesRef.current, cast)
       const pngBlob = await renderBroadsheet(session)
-      const files = [new File([pngBlob], 'symposium.png', { type: 'image/png' })]
+      const stem = 'solo' in session ? 'conversation' : 'symposium'
+      const files = [new File([pngBlob], `${stem}.png`, { type: 'image/png' })]
       let mp3Blob = null
       if (tapeRef.current.length) {
         mp3Blob = new Blob(tapeRef.current, { type: 'audio/mpeg' })
-        files.push(new File([mp3Blob], 'symposium.mp3', { type: 'audio/mpeg' }))
+        files.push(new File([mp3Blob], `${stem}.mp3`, { type: 'audio/mpeg' }))
       }
+      const who =
+        'solo' in session
+          ? session.solo === 'philosophia'
+            ? 'Lady Philosophia'
+            : byId[session.solo].name
+          : `${byId[session.a].name} & ${byId[session.b].name}`
       const payload = {
         files,
-        title: 'A symposium in Philosophia',
-        text: `“${session.question}” — ${byId[s.a].name} & ${byId[s.b].name}`,
+        title: `A ${stem} in Philosophia`,
+        text: `“${session.question}” — ${who}`,
       }
       if (navigator.canShare?.(payload)) {
         await navigator.share(payload)
@@ -496,6 +508,8 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
     setMessages(opening)
     messagesRef.current = opening
     setClippedMsgs(new Set())
+    tapeRef.current = []
+    closeShareMenu()
     setSympDraft(d => ({ ...d, q: '' }))
     runTurn(a, toEvents(opening))
   }
@@ -580,7 +594,7 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
                 symposium
               </button>
             )}
-            {symp && messages.some(m => m.role === 'assistant' && m.text && !m.streaming) && (
+            {messages.some(m => m.role === 'assistant' && m.text && !m.streaming) && (
               <button className="agent-link" onClick={publish} disabled={publishing}>
                 {publishing ? 'publishing…' : 'publish'}
               </button>

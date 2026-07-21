@@ -1,5 +1,7 @@
-// The broadsheet: renders a finished symposium as an engraved, shareable PNG
-// in the house style, entirely client-side, plus the plain-text transcript.
+// The broadsheet: renders a finished symposium or solo conversation as an
+// engraved, shareable PNG in the house style, entirely client-side, plus the
+// plain-text transcript. Cast: {a, b} = symposium; {solo: id|null} = a persona
+// conversation (null = the guide, Lady Philosophia).
 import { byId } from './data.js'
 import { speakableText } from './voice.js'
 
@@ -13,17 +15,27 @@ const RULE = '#c9bda4'
 
 // ---- pure helpers (tested) --------------------------------------------------
 
+// The guide has no canon id; she appears in sessions under this sentinel.
+export const GUIDE = 'philosophia'
+
 // Extracts the session from the panel's message list.
-export function sessionFromMessages(messages, symp) {
+// cast: {a, b} for a symposium, {solo: thinkerId|null} for a conversation.
+export function sessionFromMessages(messages, cast) {
+  const solo = 'solo' in cast
   const question = messages.find(m => m.role === 'user')?.question ?? ''
   const turns = messages
     .filter(m => (m.role === 'user' ? m.question !== question : !!m.text))
     .map(m =>
       m.role === 'user'
         ? { who: 'user', text: m.question }
-        : { who: m.speakerId, text: speakableText(m.text) },
+        : {
+            who: solo ? (cast.solo ?? GUIDE) : m.speakerId,
+            text: speakableText(m.text),
+          },
     )
-  return { a: symp.a, b: symp.b, question, turns }
+  return solo
+    ? { solo: cast.solo ?? GUIDE, question, turns }
+    : { a: cast.a, b: cast.b, question, turns }
 }
 
 // Greedy word wrap with an injected measure function (px width of a string).
@@ -45,20 +57,42 @@ export function wrapLines(text, maxWidth, measure) {
   return lines.filter((l, i, arr) => l !== '' || i !== arr.length - 1)
 }
 
-const speakerName = who => (who === 'user' ? 'The Questioner' : byId[who].name)
+const speakerName = who =>
+  who === 'user' ? 'The Questioner' : who === GUIDE ? 'Lady Philosophia' : byId[who].name
+
+// Largest letter-spacing (from `steps`, widest first) at which the title fits
+// maxWidth. `measureAt(spacing)` returns the rendered width at that spacing.
+// Falls back to the tightest step so a long title never overflows the frame.
+export function fitTitleSpacing(measureAt, maxWidth, steps = [10, 8, 6, 4, 2]) {
+  for (const s of steps) if (measureAt(s) <= maxWidth) return s
+  return steps[steps.length - 1]
+}
+
+const portraitFor = who =>
+  who === GUIDE ? 'portraits/philosophia.jpg' : byId[who].portrait
+
+// "A SYMPOSIUM — X & Y" or "A CONVERSATION — with X"
+const castLabel = session =>
+  'solo' in session
+    ? { kind: 'A CONVERSATION', names: `with ${speakerName(session.solo)}` }
+    : { kind: 'A SYMPOSIUM', names: `${byId[session.a].name} & ${byId[session.b].name}` }
 
 export function transcriptText(session) {
-  const head = `PHILOSOPHIA · A SYMPOSIUM\n${byId[session.a].name} & ${byId[session.b].name}\n“${session.question}”`
+  const { kind, names } = castLabel(session)
+  const head = `PHILOSOPHIA · ${kind}\n${names}\n“${session.question}”`
   const body = session.turns
     .map(t => `${speakerName(t.who).toUpperCase()} — ${t.text}`)
     .join('\n\n')
   return `${head}\n\n${body}\n\n${SITE}`
 }
 
-export const tweetUrl = session =>
-  `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-    `“${session.question}” — ${byId[session.a].name} & ${byId[session.b].name}, a symposium in Philosophia\nhttps://${SITE}`,
+export const tweetUrl = session => {
+  const { names } = castLabel(session)
+  const what = 'solo' in session ? `a conversation ${names}` : `${names}, a symposium`
+  return `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+    `“${session.question}” — ${what} in Philosophia\nhttps://${SITE}`,
   )}`
+}
 
 // ---- canvas rendering -------------------------------------------------------
 
@@ -155,36 +189,56 @@ export async function renderBroadsheet(session) {
   let y = 96
   ctx.textAlign = 'center'
   ctx.fillStyle = INK
+  const solo = 'solo' in session
+  const titleText = solo
+    ? 'P H I L O S O P H I A · A  C O N V E R S A T I O N'
+    : 'P H I L O S O P H I A · A  S Y M P O S I U M'
   ctx.font = fonts.title
-  try { ctx.letterSpacing = '10px' } catch { /* older engines */ }
-  ctx.fillText('P H I L O S O P H I A · A  S Y M P O S I U M', W / 2, y)
+  const titleSpacing = fitTitleSpacing(s => {
+    try { ctx.letterSpacing = `${s}px` } catch { /* older engines */ }
+    return ctx.measureText(titleText).width
+  }, W - 80)
+  try { ctx.letterSpacing = `${titleSpacing}px` } catch { /* older engines */ }
+  ctx.fillText(titleText, W / 2, y)
   try { ctx.letterSpacing = '0px' } catch { /* older engines */ }
 
   y += 78
   ctx.font = fonts.question
   ctx.fillStyle = SOFT
-  for (const line of qLines) {
-    ctx.fillText(`“${line}”`, W / 2, y)
+  // Open the quotation on the first wrapped line, close it on the last, so a
+  // multi-line question reads as one quote rather than quoting every line.
+  qLines.forEach((line, i) => {
+    const open = i === 0 ? '“' : ''
+    const close = i === qLines.length - 1 ? '”' : ''
+    ctx.fillText(`${open}${line}${close}`, W / 2, y)
     y += 64
-  }
+  })
 
-  // medallions
+  // medallions: the pair in symposium, one centered chair in conversation
   y += 30
-  const [imgA, imgB] = await Promise.all([
-    loadImage(byId[session.a].portrait),
-    loadImage(byId[session.b].portrait),
-  ])
   const r = 105
   const cy = y + r
-  drawMedallion(ctx, imgA, W / 2 - 190, cy, r)
-  drawMedallion(ctx, imgB, W / 2 + 190, cy, r)
-  ctx.font = fonts.name
-  ctx.fillStyle = INK
-  ctx.fillText(byId[session.a].name, W / 2 - 190, cy + r + 44)
-  ctx.fillText(byId[session.b].name, W / 2 + 190, cy + r + 44)
-  ctx.font = fonts.footer
-  ctx.fillStyle = FADED
-  ctx.fillText('&', W / 2, cy + 10)
+  if (solo) {
+    const img = await loadImage(portraitFor(session.solo))
+    drawMedallion(ctx, img, W / 2, cy, r)
+    ctx.font = fonts.name
+    ctx.fillStyle = INK
+    ctx.fillText(speakerName(session.solo), W / 2, cy + r + 44)
+  } else {
+    const [imgA, imgB] = await Promise.all([
+      loadImage(byId[session.a].portrait),
+      loadImage(byId[session.b].portrait),
+    ])
+    drawMedallion(ctx, imgA, W / 2 - 190, cy, r)
+    drawMedallion(ctx, imgB, W / 2 + 190, cy, r)
+    ctx.font = fonts.name
+    ctx.fillStyle = INK
+    ctx.fillText(byId[session.a].name, W / 2 - 190, cy + r + 44)
+    ctx.fillText(byId[session.b].name, W / 2 + 190, cy + r + 44)
+    ctx.font = fonts.footer
+    ctx.fillStyle = FADED
+    ctx.fillText('&', W / 2, cy + 10)
+  }
   y = cy + r + 84
 
   // turns
