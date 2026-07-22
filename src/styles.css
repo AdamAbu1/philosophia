@@ -345,4 +345,14 @@ canvas.globe:active { cursor: grabbing; }
   cursor: pointer; padding: 0;
 }
 .daily-x:hover { color: var(--ink); }
+.daily-post {
+  font-family: inherit; font-size: 11px; font-style: italic; color: var(--faded);
+  background: none; border: none; cursor: pointer; padding: 0;
+  text-decoration: underline dotted;
+}
+.daily-post:hover:not(:disabled) { color: var(--ink); }
+.daily-post:disabled { opacity: .6; cursor: default; }
+.daily-status { font-size: 11px; font-style: italic; color: var(--faded); text-decoration: none; }
+a.daily-status:hover { color: var(--ink); text-decoration: underline; }
+.daily-status.err { color: #8a3b2a; }
 .zoomctl button.conston { background: rgba(74, 66, 55, .16); color: var(--ink); border-color: var(--ink); }

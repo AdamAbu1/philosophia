@@ -7,6 +7,7 @@ import {
   transcriptText,
   tweetUrl,
   captionFor,
+  dailyCaptionFor,
   weightedLength,
   SITE,
 } from '../src/broadsheet.js'
@@ -101,6 +102,21 @@ describe('captionFor', () => {
     expect(cap.length).toBeLessThanOrEqual(280) // weighted ≥ code units, so this holds too
     expect(cap).toContain('…')
     expect(cap).toContain('a conversation with')
+  })
+})
+
+describe('dailyCaptionFor', () => {
+  it('quotes the line, names the thinker, and links the site', () => {
+    const cap = dailyCaptionFor(byId.socrates)
+    expect(cap).toContain(`“${byId.socrates.line}”`)
+    expect(cap).toContain(`— ${byId.socrates.name}`)
+    expect(cap).toContain(`https://${SITE}`)
+  })
+  it('trims a long line to X’s weighted limit', () => {
+    const p = { ...byId.socrates, name: 'X', line: '知之为知之不知为不知是知也'.repeat(24) }
+    const cap = dailyCaptionFor(p)
+    expect(weightedLength(cap)).toBeLessThanOrEqual(280)
+    expect(cap).toContain('…')
   })
 })
 

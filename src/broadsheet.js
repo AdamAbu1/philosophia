@@ -2,7 +2,8 @@
 // engraved, shareable PNG in the house style, entirely client-side, plus the
 // plain-text transcript. Cast: {a, b} = symposium; {solo: id|null} = a persona
 // conversation (null = the guide, Lady Philosophia).
-import { byId } from './data.js'
+import { byId, eraById } from './data.js'
+import { fmtRange } from './format.js'
 import { speakableText } from './voice.js'
 
 export const SITE = 'adamabu1.github.io/philosophia'
@@ -101,6 +102,23 @@ export function weightedLength(str) {
   return n
 }
 
+// Trims text so that `text` (or `text…` when it must be cut) fits within
+// `budget` weighted characters. The ellipsis itself is weight-2, so its cost
+// is reserved from the target.
+export function trimToWeight(text, budget) {
+  if (weightedLength(text) <= budget) return text
+  const target = budget - weightedLength('…')
+  let out = '',
+    w = 0
+  for (const ch of text) {
+    const cw = weightedLength(ch)
+    if (w + cw > target) break
+    out += ch
+    w += cw
+  }
+  return out.trimEnd() + '…'
+}
+
 // The post caption for direct publishing — question, cast, and link, kept
 // within X's weighted 280-limit (the question is trimmed by weight if needed).
 export function captionFor(session) {
@@ -108,20 +126,7 @@ export function captionFor(session) {
   const what = 'solo' in session ? `a conversation ${names}` : `${names}, a symposium`
   const tail = ` — ${what} in Philosophia\nhttps://${SITE}`
   const budget = 280 - weightedLength(tail) - 2 // 2 = the curly quotes
-  let q = session.question
-  if (weightedLength(q) > budget) {
-    const target = budget - 1 // leave room for the ellipsis (weight 1)
-    let out = '',
-      w = 0
-    for (const ch of q) {
-      const cw = weightedLength(ch)
-      if (w + cw > target) break
-      out += ch
-      w += cw
-    }
-    q = out.trimEnd() + '…'
-  }
-  return `“${q}”${tail}`
+  return `“${trimToWeight(session.question, budget)}”${tail}`
 }
 
 export const tweetUrl = session =>
@@ -316,6 +321,110 @@ export async function renderBroadsheet(session) {
   ctx.font = fonts.footer
   ctx.fillStyle = FADED
   ctx.fillText(SITE, W / 2, y + 52)
+
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
+}
+
+// ---- the day's line card ----------------------------------------------------
+
+// The caption for posting a day's line — quote + name + link, within X's
+// weighted 280-limit (the quote is trimmed by weight if it must be).
+export function dailyCaptionFor(p) {
+  const tail = ` — ${p.name}\nhttps://${SITE}`
+  const budget = 280 - weightedLength(tail) - 2 // 2 = the curly quotes
+  return `“${trimToWeight(p.line, budget)}”${tail}`
+}
+
+// Renders the day's line as an engraved 16:9 card (centered medallion, the
+// signature quote, name and dates) — the shareable form of the header line.
+export async function renderDailyCard(p) {
+  const W = 1200
+  const H = 675
+  const canvas = document.createElement('canvas')
+  canvas.width = W
+  canvas.height = H
+  const ctx = canvas.getContext('2d')
+
+  // paper + washes
+  ctx.fillStyle = PAPER
+  ctx.fillRect(0, 0, W, H)
+  for (const [x, y, r] of [
+    [W * 0.16, H * 0.12, W * 0.5],
+    [W * 0.84, H * 0.88, W * 0.45],
+  ]) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r)
+    g.addColorStop(0, 'rgba(140,110,60,.07)')
+    g.addColorStop(1, 'rgba(140,110,60,0)')
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, W, H)
+  }
+  // frame
+  ctx.strokeStyle = SOFT
+  ctx.lineWidth = 2
+  ctx.strokeRect(26, 26, W - 52, H - 52)
+  ctx.strokeStyle = RULE
+  ctx.lineWidth = 1
+  ctx.strokeRect(34, 34, W - 68, H - 68)
+
+  // header
+  ctx.textAlign = 'center'
+  ctx.fillStyle = INK
+  const header = 'P H I L O S O P H I A'
+  ctx.font = '600 26px Georgia, serif'
+  const hs = fitTitleSpacing(s => {
+    try { ctx.letterSpacing = `${s}px` } catch { /* older engines */ }
+    return ctx.measureText(header).width
+  }, W - 120)
+  try { ctx.letterSpacing = `${hs}px` } catch { /* older engines */ }
+  ctx.fillText(header, W / 2, 84)
+  try { ctx.letterSpacing = '0px' } catch { /* older engines */ }
+  ctx.font = 'italic 21px Georgia, serif'
+  ctx.fillStyle = FADED
+  ctx.fillText('the day’s line', W / 2, 116)
+
+  // medallion
+  const img = await loadImage(p.portrait)
+  const r = 96
+  const cy = 240
+  drawMedallion(ctx, img, W / 2, cy, r)
+
+  // quote — one opening/closing quotation across wrapped lines
+  const measure = font => s => {
+    ctx.font = font
+    return ctx.measureText(s).width
+  }
+  const qFont = 'italic 42px Georgia, serif'
+  const qLines = wrapLines(p.line, W - 260, measure(qFont))
+  ctx.font = qFont
+  ctx.fillStyle = INK
+  let qy = cy + r + 78
+  qLines.forEach((line, i) => {
+    const open = i === 0 ? '“' : ''
+    const close = i === qLines.length - 1 ? '”' : ''
+    ctx.fillText(`${open}${line}${close}`, W / 2, qy)
+    qy += 56
+  })
+
+  // attribution
+  ctx.font = '600 26px Georgia, serif'
+  ctx.fillStyle = SOFT
+  try { ctx.letterSpacing = '3px' } catch { /* older engines */ }
+  ctx.fillText(p.name.toUpperCase(), W / 2, qy + 22)
+  try { ctx.letterSpacing = '0px' } catch { /* older engines */ }
+  ctx.font = 'italic 21px Georgia, serif'
+  ctx.fillStyle = FADED
+  ctx.fillText(`${fmtRange(p)} · ${p.place.name} · ${eraById[p.era].name}`, W / 2, qy + 54)
+
+  // footer
+  ctx.strokeStyle = RULE
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(W / 2 - 260, H - 78)
+  ctx.lineTo(W / 2 + 260, H - 78)
+  ctx.stroke()
+  ctx.font = 'italic 20px Georgia, serif'
+  ctx.fillStyle = FADED
+  ctx.fillText(SITE, W / 2, H - 46)
 
   return new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
 }
