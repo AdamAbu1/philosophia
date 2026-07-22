@@ -1,0 +1,10 @@
+# Philosophia publishing proxy — deploy with:  npx wrangler deploy
+# Secrets (never commit these — set each with `npx wrangler secret put NAME`):
+#   X_CONSUMER_KEY  X_CONSUMER_SECRET  X_ACCESS_TOKEN  X_ACCESS_SECRET  PUBLISH_TOKEN
+# Optional var: X_HANDLE (your account handle, e.g. AtlasOfThought) for canonical links.
+name = "philosophia-publish"
+main = "index.js"
+compatibility_date = "2024-11-01"
+
+# [vars]
+# X_HANDLE = "AtlasOfThought"

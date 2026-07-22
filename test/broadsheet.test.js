@@ -6,6 +6,8 @@ import {
   fitTitleSpacing,
   transcriptText,
   tweetUrl,
+  captionFor,
+  weightedLength,
   SITE,
 } from '../src/broadsheet.js'
 
@@ -64,6 +66,49 @@ describe('fitTitleSpacing', () => {
   })
   it('falls back to the tightest step when nothing fits', () => {
     expect(fitTitleSpacing(measureAt(200), 500)).toBe(2)
+  })
+})
+
+describe('captionFor', () => {
+  it('names the cast and links the site for a symposium', () => {
+    const s = sessionFromMessages(messages, symp)
+    const cap = captionFor(s)
+    expect(cap).toContain('Socrates & Nietzsche, a symposium in Philosophia')
+    expect(cap).toContain(`https://${SITE}`)
+    expect(cap).toContain('“Is suffering good for us?”')
+  })
+
+  it('reads as a conversation for a solo session', () => {
+    const s = sessionFromMessages([{ role: 'user', question: 'Why?' }], { solo: 'socrates' })
+    expect(captionFor(s)).toContain('a conversation with Socrates')
+  })
+
+  it('never exceeds X’s 280-character limit, trimming the question', () => {
+    const longQ = 'Whether the examined life is truly worth living '.repeat(12).trim()
+    const s = sessionFromMessages([{ role: 'user', question: longQ }], { solo: 'socrates' })
+    const cap = captionFor(s)
+    expect(cap.length).toBeLessThanOrEqual(280)
+    expect(cap).toContain('…')
+    expect(cap).toContain('a conversation with Socrates')
+    expect(cap).toContain(SITE)
+  })
+
+  it('stays within X’s WEIGHTED limit for a long CJK question (CJK counts double)', () => {
+    const longHan = '學而時習之不亦說乎有朋自遠方來不亦樂乎'.repeat(12) // ~228 Han chars
+    const s = sessionFromMessages([{ role: 'user', question: longHan }], { solo: 'confucius' })
+    const cap = captionFor(s)
+    expect(weightedLength(cap)).toBeLessThanOrEqual(280)
+    expect(cap.length).toBeLessThanOrEqual(280) // weighted ≥ code units, so this holds too
+    expect(cap).toContain('…')
+    expect(cap).toContain('a conversation with')
+  })
+})
+
+describe('weightedLength', () => {
+  it('counts Latin as 1 and CJK as 2', () => {
+    expect(weightedLength('abc')).toBe(3)
+    expect(weightedLength('中文')).toBe(4)
+    expect(weightedLength('a中')).toBe(3)
   })
 })
 

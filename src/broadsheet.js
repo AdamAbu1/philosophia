@@ -86,13 +86,46 @@ export function transcriptText(session) {
   return `${head}\n\n${body}\n\n${SITE}`
 }
 
-export const tweetUrl = session => {
+// X's weighted character count: most characters weigh 1, but CJK and other
+// ranges outside twitter-text's weight-1 set weigh 2, so a Chinese-language
+// question can blow past 280 while looking short by code-unit length.
+const isLightWeight = cp =>
+  (cp >= 0 && cp <= 4351) ||
+  (cp >= 8192 && cp <= 8205) ||
+  (cp >= 8208 && cp <= 8223) ||
+  (cp >= 8242 && cp <= 8247)
+
+export function weightedLength(str) {
+  let n = 0
+  for (const ch of str) n += isLightWeight(ch.codePointAt(0)) ? 1 : 2
+  return n
+}
+
+// The post caption for direct publishing — question, cast, and link, kept
+// within X's weighted 280-limit (the question is trimmed by weight if needed).
+export function captionFor(session) {
   const { names } = castLabel(session)
   const what = 'solo' in session ? `a conversation ${names}` : `${names}, a symposium`
-  return `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-    `“${session.question}” — ${what} in Philosophia\nhttps://${SITE}`,
-  )}`
+  const tail = ` — ${what} in Philosophia\nhttps://${SITE}`
+  const budget = 280 - weightedLength(tail) - 2 // 2 = the curly quotes
+  let q = session.question
+  if (weightedLength(q) > budget) {
+    const target = budget - 1 // leave room for the ellipsis (weight 1)
+    let out = '',
+      w = 0
+    for (const ch of q) {
+      const cw = weightedLength(ch)
+      if (w + cw > target) break
+      out += ch
+      w += cw
+    }
+    q = out.trimEnd() + '…'
+  }
+  return `“${q}”${tail}`
 }
+
+export const tweetUrl = session =>
+  `https://twitter.com/intent/tweet?text=${encodeURIComponent(captionFor(session))}`
 
 // ---- canvas rendering -------------------------------------------------------
 

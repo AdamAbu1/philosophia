@@ -23,7 +23,15 @@ import {
   streamReply,
 } from './agent.js'
 import { LIVING, livingSrc } from './living.js'
-import { sessionFromMessages, renderBroadsheet, transcriptText, tweetUrl } from './broadsheet.js'
+import { sessionFromMessages, renderBroadsheet, transcriptText, tweetUrl, captionFor } from './broadsheet.js'
+import {
+  isPublishConfigured,
+  postToX,
+  getPublishEndpoint,
+  setPublishEndpoint,
+  getPublishToken,
+  setPublishToken,
+} from './publish-api.js'
 import { addClipping, clippingsBlock } from './codex.js'
 import {
   voiceSupport,
@@ -101,6 +109,8 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
   const [showKeyForm, setShowKeyForm] = useState(false)
   const [keyDraft, setKeyDraft] = useState('')
   const [elDraft, setElDraft] = useState('')
+  const [endpointDraft, setEndpointDraft] = useState('')
+  const [pubTokDraft, setPubTokDraft] = useState('')
   const [model, setModelState] = useState(() => getModel())
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -186,9 +196,13 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
       setKeyed(true)
     }
     if (elDraft.trim()) setElevenLabsKey(elDraft.trim())
+    if (endpointDraft.trim()) setPublishEndpoint(endpointDraft.trim())
+    if (pubTokDraft.trim()) setPublishToken(pubTokDraft.trim())
     if (k || getApiKey()) setShowKeyForm(false)
     setKeyDraft('')
     setElDraft('')
+    setEndpointDraft('')
+    setPubTokDraft('')
     setError(null)
   }
 
@@ -466,20 +480,19 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
         mp3Blob = new Blob(tapeRef.current, { type: 'audio/mpeg' })
         files.push(new File([mp3Blob], `${stem}.mp3`, { type: 'audio/mpeg' }))
       }
-      const who =
-        'solo' in session
-          ? session.solo === 'philosophia'
-            ? 'Lady Philosophia'
-            : byId[session.solo].name
-          : `${byId[session.a].name} & ${byId[session.b].name}`
-      const payload = {
-        files,
-        title: `A ${stem} in Philosophia`,
-        text: `“${session.question}” — ${who}`,
+      // One-tap posting when the publishing Worker is configured; on any
+      // failure fall through to the share sheet, which keeps the image.
+      if (isPublishConfigured()) {
+        try {
+          const { url } = await postToX({ image: pngBlob, text: captionFor(session) })
+          closeShareMenu()
+          setShareMenu({ posted: url })
+          return
+        } catch (err) {
+          setError(`${err.message} — opening the share sheet instead.`)
+        }
       }
-      if (navigator.canShare?.(payload)) {
-        await navigator.share(payload)
-      } else {
+      const openDownloadMenu = () => {
         closeShareMenu()
         setShareMenu({
           pngUrl: URL.createObjectURL(pngBlob),
@@ -487,6 +500,19 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
           transcript: transcriptText(session),
           tweet: tweetUrl(session),
         })
+      }
+      const payload = { files, title: `A ${stem} in Philosophia`, text: captionFor(session) }
+      if (navigator.canShare?.(payload)) {
+        try {
+          await navigator.share(payload)
+        } catch (err) {
+          // A cancel is silent; any real share failure keeps the artifact
+          // reachable via the download menu instead of dropping it.
+          if (err?.name === 'AbortError') return
+          openDownloadMenu()
+        }
+      } else {
+        openDownloadMenu()
       }
     } catch (err) {
       if (err?.name !== 'AbortError') setError(err?.message ?? 'Could not publish the proceedings.')
@@ -643,7 +669,42 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
                 autoComplete="off"
                 aria-label="ElevenLabs API key (optional)"
               />
-              <button type="submit" disabled={!keyDraft.trim() && !elDraft.trim() && !keyed}>
+            </div>
+            <div className="agent-row">
+              <input
+                type="url"
+                value={endpointDraft}
+                onChange={e => setEndpointDraft(e.target.value)}
+                placeholder={
+                  getPublishEndpoint()
+                    ? 'Publish endpoint (saved — blank keeps it)'
+                    : 'Publish endpoint — optional, to post straight to X'
+                }
+                autoComplete="off"
+                aria-label="Publishing endpoint URL (optional)"
+              />
+            </div>
+            <div className="agent-row">
+              <input
+                type="password"
+                value={pubTokDraft}
+                onChange={e => setPubTokDraft(e.target.value)}
+                placeholder={
+                  getPublishToken() ? 'Publish token (saved — blank keeps it)' : 'Publish token'
+                }
+                autoComplete="off"
+                aria-label="Publish token (optional)"
+              />
+              <button
+                type="submit"
+                disabled={
+                  !keyDraft.trim() &&
+                  !elDraft.trim() &&
+                  !endpointDraft.trim() &&
+                  !pubTokDraft.trim() &&
+                  !keyed
+                }
+              >
                 save
               </button>
               {keyed && (
@@ -769,7 +830,19 @@ export default function AgentPanel({ personaId, onExitPersona, selectedId, onSel
                   )}
                 </div>
               )}
-              {shareMenu && (
+              {shareMenu?.posted && (
+                <p className="share-menu">
+                  posted to X —{' '}
+                  <a className="agent-link" href={shareMenu.posted} target="_blank" rel="noopener noreferrer">
+                    view the post
+                  </a>
+                  {' · '}
+                  <button className="agent-link" onClick={closeShareMenu}>
+                    dismiss
+                  </button>
+                </p>
+              )}
+              {shareMenu && !shareMenu.posted && (
                 <p className="share-menu">
                   the proceedings are ready —{' '}
                   <a className="agent-link" href={shareMenu.pngUrl} download="symposium.png">
